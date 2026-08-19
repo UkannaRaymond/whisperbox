@@ -64,11 +64,11 @@ export function ChatBubble({
 
         <div
           className={cn(
-            "mt-1 flex items-center gap-1 text-[11px] opacity-70",
+            "mt-1 flex items-center gap-1 text-[11px]",
             isOwnMessage ? "justify-end" : "justify-start",
           )}
         >
-          <time dateTime={createdAt}>
+          <time className="opacity-70" dateTime={createdAt}>
             {new Date(createdAt).toLocaleTimeString(undefined, {
               hour: "numeric",
               minute: "2-digit",
@@ -126,11 +126,23 @@ function DeliveryStatus({ entry }: { entry: TimelineEntry }) {
   }
 
   const status = entry.message.status;
+
   if (status === "READ") {
     return <CheckCheck className="size-3.5 text-emerald-400" aria-label="Read" />;
   }
   if (status === "DELIVERED") {
-    return <CheckCheck className="size-3.5 opacity-60" aria-label="Delivered" />;
+    // `text-primary-foreground/70` — a single-level color-alpha modifier,
+    // not a separate `opacity-*` utility stacked on top of the row's own
+    // (now removed — see the wrapping <div> above) opacity. Two nested
+    // opacities were compounding multiplicatively (0.7 × 0.6 ≈ 0.42),
+    // which is why these ticks were reported as invisible: this theme's
+    // dark-mode `--primary-foreground` is near-black (#0b0d14) on a
+    // medium-purple `--primary` (#8b7bf0) bubble, and near-black at 42%
+    // opacity on a medium-light purple washes out to almost nothing.
+    // `primary-foreground` is specifically the color chosen for contrast
+    // against `primary` in both themes, so deriving from it (rather than
+    // a hardcoded gray) keeps this correct in light mode too.
+    return <CheckCheck className="size-3.5 text-primary-foreground/70" aria-label="Delivered" />;
   }
-  return <Check className="size-3.5 opacity-60" aria-label="Sent" />;
+  return <Check className="size-3.5 text-primary-foreground/70" aria-label="Sent" />;
 }

@@ -32,12 +32,20 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
 
     setError(null);
     notifyStoppedTyping();
+    // Clear the textarea immediately, before the send even starts —
+    // WhatsApp-style optimistic UX. Previously this only happened after
+    // `mutateAsync` resolved, so the typed text sat in the box for the
+    // entire round-trip (encryption + socket ack, or the offline-queue
+    // fallback), which reads as "my message isn't sending" even when it
+    // actually is. If the send fails, the text is restored below so
+    // nothing typed is lost.
+    clearDraft(conversationId);
 
     try {
       await sendMessage.mutateAsync({ conversationId, plaintext: text });
-      clearDraft(conversationId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
+      setDraft(conversationId, text);
     }
   }
 

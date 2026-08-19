@@ -12,6 +12,27 @@ import { useSyncEngine } from "@/features/offline/hooks/use-sync-engine";
 import { useRealtimeMessages } from "@/features/chat/hooks/use-realtime-messages";
 import { usePresenceBridge } from "@/features/chat/hooks/use-presence-bridge";
 
+/**
+ * Authenticated app shell (10-FRONTEND.md § UI Components: "Sidebar",
+ * "Top Navigation").
+ *
+ * This route group previously had NO auth guard at all — every route
+ * under `(app)` (e.g. `/conversations`) rendered for signed-out visitors
+ * too, and `useSyncEngine()`/`useRealtimeMessages()` started
+ * unconditionally on mount. For a signed-out visitor that meant the sync
+ * engine's first pull (`GET /api/v1/conversations`) hit a 401 immediately
+ * and threw an uncaught "Authentication required" error instead of the
+ * page just redirecting to `/login`. This now checks `useSession()`
+ * first: while it's resolving, nothing renders yet; once resolved, a
+ * signed-out visitor is redirected to `/login` before the sidebar, sync
+ * engine, or real-time bridge ever mount. `useSyncEngine`'s own
+ * `enabled` gate (features/offline/hooks/use-sync-engine.ts) is a second,
+ * belt-and-suspenders safeguard against the same failure mode.
+ *
+ * Also redirects to `/onboarding/username` if the signed-in user hasn't
+ * picked a username yet (see `useRequireUsername`'s doc comment), and
+ * gates content behind unlocking this device's encryption identity.
+ */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { data: sessionData, isPending: isSessionPending } = useSession();
@@ -37,7 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh flex-1 overflow-hidden">
+    <div className="fixed inset-0 flex overflow-hidden">
       <AppSidebar />
       <IdentityUnlockGate>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>

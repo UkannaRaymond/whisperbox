@@ -66,11 +66,20 @@ async function handleConnection(io: AppServer, socket: AppSocket): Promise<void>
 
     const isFirstConnection = await registerConnection(userId);
     if (isFirstConnection) {
-      await syncPresenceToDatabase(userId, true);
+      // Broadcast first, persist second. `syncPresenceToDatabase` is a
+      // full DB write (Prisma) that exists purely to keep REST reads
+      // consistent with real-time state — nothing about the live
+      // broadcast needs to wait on it. Previously this was `await`ed
+      // BEFORE the emit, so every already-connected client had to wait
+      // out that DB round-trip before hearing someone came online, while
+      // a fresh page load (reading the already-settled Redis state via
+      // the `authenticated` snapshot below) saw it immediately — the
+      // exact "only on refresh does it appear immediately" symptom.
       io.to(conversationIds.map(conversationRoom)).emit("user_online", {
         userId,
         lastSeenAt: new Date().toISOString(),
       });
+      void syncPresenceToDatabase(userId, true);
     }
 
     const onlineUserIds = await getInitialPresenceSnapshot(userId, conversationIds);
@@ -123,9 +132,9 @@ async function handleDisconnect(
   try {
     const wasLastConnection = await deregisterConnection(userId);
     if (wasLastConnection) {
-      await syncPresenceToDatabase(userId, false);
       const lastSeenAt = new Date().toISOString();
       io.to(conversationIds.map(conversationRoom)).emit("user_offline", { userId, lastSeenAt });
+      void syncPresenceToDatabase(userId, false);
     }
   } catch (error) {
     log.error({ error, userId, socketId: socket.id }, "Error during disconnect cleanup");
