@@ -1,0 +1,73 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # One-off migration runner, not a long-lived service. Uses the `builder`
+  # stage (target below) rather than the lean `runner` image, because
+  # `runner` deliberately only contains Next's traced standalone output —
+  # no `prisma` CLI, no schema-engine binary, nothing `migrate deploy`
+  # needs. `builder` already has the full `node_modules` install and ran
+  # `prisma generate` once already, so re-running the CLI here is cheap.
+  # `app` waits on this exiting 0 (`service_completed_successfully`)
+  # before it starts, so the schema is always current before the app
+  # accepts traffic — this didn't exist before, so a fresh deploy against
+  # an un-migrated database would boot straight into query errors.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: whisperbox
+      POSTGRES_PASSWORD: whisperbox
+      POSTGRES_DB: whisperbox
+    ports:
+      - "5432:5432"
+    volumes:
+      - whisperbox-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whisperbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - whisperbox-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  whisperbox-postgres-data:
+  whisperbox-redis-data:

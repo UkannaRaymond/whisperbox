@@ -1,0 +1,12 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+public
+pnpm-lock.yaml
+prisma/generated
+# pnpm-managed, tool-generated (see approve-builds in the pnpm docs) —
+# not meant to be hand-formatted; letting Prettier touch it would just
+# fight with pnpm's own writer on every install.
+pnpm-workspace.yaml

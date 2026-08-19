@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm run typecheck
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run format:check
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm run test:coverage
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    env:
+      DATABASE_URL: "postgresql://whisperbox:whisperbox@localhost:5432/whisperbox"
+      REDIS_URL: "redis://localhost:6379"
+      AUTH_SECRET: "ci-build-secret-not-for-production-use-only"
+      AUTH_URL: "http://localhost:3000"
+      R2_BUCKET: "ci-bucket"
+      R2_ACCESS_KEY: "ci-access-key"
+      R2_SECRET_KEY: "ci-secret-key"
+      R2_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+      NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm run build
+
+  # There was no e2e job in this pipeline at all — tests/e2e/*.spec.ts
+  # existed and passed locally but never ran in CI, so a regression there
+  # (like the auth-guard bug tests/e2e/auth-guard.spec.ts now covers)
+  # could land on main undetected. Runs against real Postgres/Redis
+  # service containers, not mocks, since Playwright drives a real browser
+  # against a real running server (`webServer` in playwright.config.ts).
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: whisperbox
+          POSTGRES_PASSWORD: whisperbox
+          POSTGRES_DB: whisperbox
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U whisperbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://whisperbox:whisperbox@localhost:5432/whisperbox"
+      REDIS_URL: "redis://localhost:6379"
+      AUTH_SECRET: "ci-e2e-secret-not-for-production-use-only-000000"
+      AUTH_URL: "http://localhost:3000"
+      R2_BUCKET: "ci-bucket"
+      R2_ACCESS_KEY: "ci-access-key"
+      R2_SECRET_KEY: "ci-secret-key"
+      R2_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+      NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm exec prisma migrate deploy
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

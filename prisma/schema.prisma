@@ -1,0 +1,1592 @@
+// WhisperBox — Stage 04
+// Prisma schema implementing the tables defined in 04-DATABASE.md
+//
+// Design principles applied (per SDD / DATABASE spec):
+// - UUID primary keys
+// - Soft deletes (deleted_at) on all user-generated content
+// - Audit timestamps (created_at / updated_at)
+// - Foreign keys indexed
+// - Composite indexes on membership / lookup tables
+// - Zero-knowledge storage: message content columns only ever hold ciphertext
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+///////////////////////////////////////////////////////////
+// ENUMS
+///////////////////////////////////////////////////////////
+
+enum UserStatus {
+  ONLINE
+  AWAY
+  BUSY
+  INVISIBLE
+  OFFLINE
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ConversationVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum DevicePlatform {
+  WINDOWS
+  MACOS
+  LINUX
+  ANDROID
+  IOS
+  WEB
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  LOCATION
+  CONTACT
+  SYSTEM
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  ARCHIVE
+  OTHER
+}
+
+enum NotificationType {
+  MESSAGE
+  GROUP
+  INVITATION
+  SECURITY
+  SYSTEM
+}
+
+///////////////////////////////////////////////////////////
+// BETTER AUTH MODELS
+///////////////////////////////////////////////////////////
+
+model User {
+  id              String   @id @default(uuid())
+
+  name            String
+
+  email           String   @unique
+
+  emailVerified   Boolean  @default(false)
+
+  image           String?
+
+  createdAt       DateTime @default(now())
+
+  updatedAt       DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // AUTH
+  /////////////////////////////////////////////////////////
+
+  sessions        Session[]
+
+  accounts        Account[]
+
+  /////////////////////////////////////////////////////////
+  // PROFILE
+  /////////////////////////////////////////////////////////
+
+  profile         UserProfile?
+
+  settings        UserSettings?
+
+  /////////////////////////////////////////////////////////
+  // DEVICES & KEYS
+  /////////////////////////////////////////////////////////
+
+  devices         Device[]
+
+  keyBundle       UserKeyBundle?
+
+  /////////////////////////////////////////////////////////
+  // MESSAGING
+  /////////////////////////////////////////////////////////
+
+  conversations   ConversationMember[]
+
+  createdConversations Conversation[]
+
+  sentMessages    Message[]
+
+  /////////////////////////////////////////////////////////
+  // CONTACTS
+  /////////////////////////////////////////////////////////
+
+  contacts        Contact[] @relation("OwnerContacts")
+
+  contactOf       Contact[] @relation("TargetContacts")
+
+  sentRequests    ContactRequest[] @relation("ContactRequestSender")
+
+  receivedRequests ContactRequest[] @relation("ContactRequestReceiver")
+
+  /////////////////////////////////////////////////////////
+  // GROUP INVITATIONS
+  /////////////////////////////////////////////////////////
+
+  sentInvitations     ConversationInvitation[] @relation("ConversationInviterUser")
+
+  receivedInvitations ConversationInvitation[] @relation("ConversationInviteeUser")
+
+  invitedMembers      ConversationMember[] @relation("ConversationInviter")
+
+  joinRequests        ConversationJoinRequest[]
+
+  /////////////////////////////////////////////////////////
+  // USER BLOCKING
+  /////////////////////////////////////////////////////////
+
+  blockedUsers UserBlock[] @relation("UserBlocksInitiated")
+
+  blockedByUsers UserBlock[] @relation("UserBlocksReceived")
+
+  /////////////////////////////////////////////////////////
+  // MESSAGE FEATURES
+  /////////////////////////////////////////////////////////
+
+  reactions MessageReaction[]
+
+  mentions MessageMention[]
+
+  edits MessageEdit[]
+
+  pinnedMessages PinnedMessage[]
+
+  /////////////////////////////////////////////////////////
+  // MESSAGE DELIVERY & KEYS
+  /////////////////////////////////////////////////////////
+
+  messageReceipts MessageReceipt[]
+
+  encryptedMessageKeys EncryptedMessageKey[]
+
+  /////////////////////////////////////////////////////////
+  // ATTACHMENTS
+  /////////////////////////////////////////////////////////
+
+  uploadedAttachments Attachment[]
+
+  /////////////////////////////////////////////////////////
+  // NOTIFICATIONS
+  /////////////////////////////////////////////////////////
+
+  notifications Notification[]
+
+  /////////////////////////////////////////////////////////
+  // AUDIT
+  /////////////////////////////////////////////////////////
+
+  auditLogs AuditLog[]
+
+  /////////////////////////////////////////////////////////
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+
+  expiresAt    DateTime
+
+  token        String   @unique
+
+  createdAt    DateTime @default(now())
+
+  updatedAt    DateTime @updatedAt
+
+  ipAddress    String?
+
+  userAgent    String?
+
+  userId       String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+
+  @@map("sessions")
+}
+
+model Account {
+  id String @id @default(uuid())
+
+  accountId String
+
+  providerId String
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accessToken String?
+
+  refreshToken String?
+
+  idToken String?
+
+  accessTokenExpiresAt DateTime?
+
+  refreshTokenExpiresAt DateTime?
+
+  scope String?
+
+  password String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+
+  @@index([userId])
+
+  @@map("accounts")
+}
+
+model Verification {
+  id String @id @default(uuid())
+
+  identifier String
+
+  value String
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([identifier])
+
+  @@map("verifications")
+}
+
+///////////////////////////////////////////////////////////
+// USER PROFILE
+///////////////////////////////////////////////////////////
+
+model UserProfile {
+  id                  String      @id @default(uuid())
+
+  userId              String      @unique
+
+  username            String      @unique
+
+  displayName         String?
+
+  bio                 String?
+
+  avatarUrl           String?
+
+  bannerUrl           String?
+
+  website             String?
+
+  country             String?
+
+  timezone            String?
+
+  locale              String      @default("en")
+
+  status              UserStatus  @default(OFFLINE)
+
+  lastSeenAt          DateTime?
+
+  profilePublic       Boolean     @default(true)
+
+  searchable          Boolean     @default(true)
+
+  onboardingCompleted Boolean     @default(false)
+
+  deletedAt           DateTime?
+
+  createdAt           DateTime    @default(now())
+
+  updatedAt           DateTime    @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([username])
+
+  @@index([status])
+
+  @@index([searchable])
+
+  @@map("user_profiles")
+}
+
+///////////////////////////////////////////////////////////
+// USER SETTINGS
+///////////////////////////////////////////////////////////
+
+model UserSettings {
+  id                          String   @id @default(uuid())
+
+  userId                      String   @unique
+
+  theme                       String   @default("system")
+
+  language                    String   @default("en")
+
+  fontScale                   Int      @default(100)
+
+  notificationsEnabled        Boolean  @default(true)
+
+  desktopNotifications        Boolean  @default(true)
+
+  emailNotifications          Boolean  @default(false)
+
+  soundEnabled                Boolean  @default(true)
+
+  typingIndicators            Boolean  @default(true)
+
+  readReceipts                Boolean  @default(true)
+
+  linkPreviews                Boolean  @default(true)
+
+  autoDownloadImages          Boolean  @default(false)
+
+  autoDownloadVideos          Boolean  @default(false)
+
+  autoDownloadDocuments       Boolean  @default(false)
+
+  disappearingMessagesDefault Int?
+
+  biometricEnabled            Boolean  @default(false)
+
+  sessionTimeoutMinutes       Int      @default(30)
+
+  createdAt                   DateTime @default(now())
+
+  updatedAt                   DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+
+  @@map("user_settings")
+}
+
+///////////////////////////////////////////////////////////
+// USER DEVICES
+///////////////////////////////////////////////////////////
+
+model Device {
+  id                  String          @id @default(uuid())
+
+  userId              String
+
+  name                String
+
+  platform            DevicePlatform
+
+  devicePublicKey     String
+
+  fingerprint         String          @unique
+
+  deviceIdentifier    String          @unique
+
+  appVersion          String?
+
+  osVersion           String?
+
+  trusted             Boolean         @default(false)
+
+  revoked             Boolean         @default(false)
+
+  revokedAt           DateTime?
+
+  lastIPAddress       String?
+
+  lastUserAgent       String?
+
+  lastSeenAt          DateTime?
+
+  createdAt           DateTime        @default(now())
+
+  updatedAt           DateTime        @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([userId])
+
+  @@index([trusted])
+
+  @@index([revoked])
+
+  @@map("devices")
+}
+
+///////////////////////////////////////////////////////////
+// AUDIT LOG
+///////////////////////////////////////////////////////////
+
+model AuditLog {
+  id                  String      @id @default(uuid())
+
+  userId              String?
+
+  action              String
+
+  entity              String
+
+  entityId            String?
+
+  metadata            Json?
+
+  ipAddress           String?
+
+  userAgent           String?
+
+  createdAt           DateTime    @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([userId])
+
+  @@index([action])
+
+  @@index([entity])
+
+  @@index([createdAt])
+
+  @@map("audit_logs")
+}
+
+///////////////////////////////////////////////////////////
+// USER KEY BUNDLE
+///////////////////////////////////////////////////////////
+
+model UserKeyBundle {
+  id                      String   @id @default(uuid())
+
+  userId                  String   @unique
+
+  identityKeyId           String   @unique
+
+  currentSignedPreKeyId   String?  @unique
+
+  protocolVersion         Int      @default(1)
+
+  algorithm               String   @default("X25519")
+
+  fingerprint             String   @unique
+
+  publishedAt             DateTime @default(now())
+
+  lastRotationAt          DateTime?
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  identityKey IdentityKey @relation(fields: [identityKeyId], references: [id])
+
+  currentSignedPreKey SignedPreKey? @relation("CurrentSignedPreKey", fields: [currentSignedPreKeyId], references: [id], onDelete: SetNull)
+
+  signedPreKeys SignedPreKey[] @relation("BundleSignedPreKeys")
+
+  oneTimePreKeys OneTimePreKey[]
+
+  /////////////////////////////////////////////////////////
+
+  @@index([userId])
+
+  @@map("user_key_bundles")
+}
+
+///////////////////////////////////////////////////////////
+// IDENTITY KEY
+///////////////////////////////////////////////////////////
+
+model IdentityKey {
+  id                      String   @id @default(uuid())
+
+  publicKey               String
+
+  encryptedPrivateKey     String
+
+  fingerprint             String   @unique
+
+  algorithm               String   @default("X25519")
+
+  version                 Int      @default(1)
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  bundle UserKeyBundle?
+
+  /////////////////////////////////////////////////////////
+
+  @@map("identity_keys")
+}
+
+///////////////////////////////////////////////////////////
+// SIGNED PRE KEYS
+///////////////////////////////////////////////////////////
+
+model SignedPreKey {
+  id                      String   @id @default(uuid())
+
+  bundleId                String
+
+  keyId                   Int
+
+  publicKey               String
+
+  encryptedPrivateKey     String
+
+  signature               String
+
+  algorithm               String   @default("X25519")
+
+  active                  Boolean  @default(true)
+
+  published               Boolean  @default(false)
+
+  expiresAt               DateTime?
+
+  revokedAt               DateTime?
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  bundle UserKeyBundle @relation("BundleSignedPreKeys", fields: [bundleId], references: [id], onDelete: Cascade)
+
+  currentForBundle UserKeyBundle? @relation("CurrentSignedPreKey")
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([bundleId, keyId])
+
+  @@index([bundleId])
+
+  @@index([active])
+
+  @@index([published])
+
+  @@map("signed_pre_keys")
+}
+
+///////////////////////////////////////////////////////////
+// ONE-TIME PRE KEYS
+///////////////////////////////////////////////////////////
+
+model OneTimePreKey {
+  id                      String   @id @default(uuid())
+
+  bundleId                String
+
+  keyId                   Int
+
+  publicKey               String
+
+  encryptedPrivateKey     String
+
+  algorithm               String   @default("X25519")
+
+  consumed                Boolean  @default(false)
+
+  consumedAt              DateTime?
+
+  published               Boolean  @default(false)
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  bundle UserKeyBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([bundleId, keyId])
+
+  @@index([bundleId])
+
+  @@index([consumed])
+
+  @@index([published])
+
+  @@map("one_time_pre_keys")
+}
+
+///////////////////////////////////////////////////////////
+// CONVERSATIONS
+///////////////////////////////////////////////////////////
+
+model Conversation {
+  id                      String @id @default(uuid())
+
+  type                    ConversationType
+
+  visibility              ConversationVisibility @default(PRIVATE)
+
+  name                    String?
+
+  description             String?
+
+  avatar                  String?
+
+  createdById             String
+
+  lastMessageId           String?
+
+  encryptedMetadata       Json?
+
+  archived                Boolean @default(false)
+
+  deleted                 Boolean @default(false)
+
+  deletedAt               DateTime?
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  creator User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  members ConversationMember[]
+
+  messages Message[]
+
+  lastMessage Message? @relation("ConversationLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+
+  invitations ConversationInvitation[]
+
+  joinRequests ConversationJoinRequest[]
+
+  pinnedMessages PinnedMessage[]
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([createdById])
+
+  @@index([updatedAt])
+
+  @@index([type])
+
+  @@index([visibility])
+
+  @@index([archived])
+
+  @@map("conversations")
+}
+
+///////////////////////////////////////////////////////////
+// CONVERSATION MEMBERS
+///////////////////////////////////////////////////////////
+
+model ConversationMember {
+  id                      String @id @default(uuid())
+
+  conversationId          String
+
+  userId                  String
+
+  role                    MemberRole @default(MEMBER)
+
+  nickname                String?
+
+  joinedAt                DateTime @default(now())
+
+  joinedById              String?
+
+  leftAt                  DateTime?
+
+  muted                   Boolean @default(false)
+
+  archived                Boolean @default(false)
+
+  pinned                  Boolean @default(false)
+
+  notificationMutedUntil  DateTime?
+
+  lastReadMessageId       String?
+
+  createdAt               DateTime @default(now())
+
+  updatedAt               DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedBy User? @relation("ConversationInviter", fields: [joinedById], references: [id], onDelete: SetNull)
+
+  lastReadMessage Message? @relation("ConversationLastReadMessage", fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([conversationId, userId])
+
+  @@index([conversationId])
+
+  @@index([userId])
+
+  @@index([role])
+
+  @@index([lastReadMessageId])
+
+  @@map("conversation_members")
+}
+
+///////////////////////////////////////////////////////////
+// MESSAGES
+///////////////////////////////////////////////////////////
+
+model Message {
+  id                      String          @id @default(uuid())
+
+  /////////////////////////////////////////////////////////
+  // OWNERSHIP
+  /////////////////////////////////////////////////////////
+
+  conversationId          String
+
+  senderId                String
+
+  clientMessageId         String          @unique
+
+  /////////////////////////////////////////////////////////
+  // MESSAGE HIERARCHY
+  /////////////////////////////////////////////////////////
+
+  replyToMessageId        String?
+
+  forwardedFromMessageId  String?
+
+  /////////////////////////////////////////////////////////
+  // CONTENT
+  /////////////////////////////////////////////////////////
+
+  type                    MessageType     @default(TEXT)
+
+  encryptedContent        String
+
+  nonce                   String
+
+  encryptionVersion       Int             @default(1)
+
+  metadata                Json?
+
+  /////////////////////////////////////////////////////////
+  // DELIVERY
+  /////////////////////////////////////////////////////////
+
+  status                  MessageStatus   @default(SENDING)
+
+  serverReceivedAt        DateTime?
+
+  sequenceNumber          BigInt
+
+  /////////////////////////////////////////////////////////
+  // EDITING
+  /////////////////////////////////////////////////////////
+
+  edited                  Boolean         @default(false)
+
+  editedAt                DateTime?
+
+  /////////////////////////////////////////////////////////
+  // PINNING
+  /////////////////////////////////////////////////////////
+
+  pinned                  Boolean         @default(false)
+
+  pinnedAt                DateTime?
+
+  /////////////////////////////////////////////////////////
+  // FORWARDING
+  /////////////////////////////////////////////////////////
+
+  forwarded               Boolean         @default(false)
+
+  /////////////////////////////////////////////////////////
+  // EPHEMERAL
+  /////////////////////////////////////////////////////////
+
+  ephemeral               Boolean         @default(false)
+
+  expiresAt               DateTime?
+
+  /////////////////////////////////////////////////////////
+  // SOFT DELETE
+  /////////////////////////////////////////////////////////
+
+  deleted                 Boolean         @default(false)
+
+  deletedAt               DateTime?
+
+  /////////////////////////////////////////////////////////
+  // TIMESTAMPS
+  /////////////////////////////////////////////////////////
+
+  createdAt               DateTime        @default(now())
+
+  updatedAt               DateTime        @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // REPLIES
+  /////////////////////////////////////////////////////////
+
+  replyTo Message? @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+
+  replies Message[] @relation("MessageReplies")
+
+  /////////////////////////////////////////////////////////
+  // FORWARDED MESSAGES
+  /////////////////////////////////////////////////////////
+
+  forwardedFrom Message? @relation("ForwardedMessages", fields: [forwardedFromMessageId], references: [id], onDelete: SetNull)
+
+  forwardedMessages Message[] @relation("ForwardedMessages")
+
+  /////////////////////////////////////////////////////////
+  // LAST MESSAGE RELATION
+  /////////////////////////////////////////////////////////
+
+  lastForConversation Conversation[] @relation("ConversationLastMessage")
+
+  /////////////////////////////////////////////////////////
+  // LAST READ RELATION
+  /////////////////////////////////////////////////////////
+
+  readBy ConversationMember[] @relation("ConversationLastReadMessage")
+
+  /////////////////////////////////////////////////////////
+  // CHILD TABLES
+  /////////////////////////////////////////////////////////
+
+  encryptedKeys EncryptedMessageKey[]
+
+  receipts MessageReceipt[]
+
+  reactions MessageReaction[]
+
+  attachments Attachment[]
+
+  mentions MessageMention[]
+
+  edits MessageEdit[]
+
+  pinnedMessage PinnedMessage?
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([conversationId, sequenceNumber])
+
+  @@index([conversationId, createdAt])
+
+  @@index([senderId])
+
+  @@index([replyToMessageId])
+
+  @@index([forwardedFromMessageId])
+
+  @@index([status])
+
+  @@index([deleted])
+
+  @@index([expiresAt])
+
+  @@index([createdAt])
+
+  @@map("messages")
+}
+
+///////////////////////////////////////////////////////////
+// PER-RECIPIENT ENCRYPTED MESSAGE KEYS
+///////////////////////////////////////////////////////////
+
+model EncryptedMessageKey {
+  id                  String   @id @default(uuid())
+
+  messageId           String
+
+  recipientId         String
+
+  encryptedKey        String
+
+  algorithm           String   @default("X25519")
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([messageId, recipientId])
+
+  @@index([messageId])
+
+  @@index([recipientId])
+
+  @@map("encrypted_message_keys")
+}
+
+///////////////////////////////////////////////////////////
+// MESSAGE RECEIPTS
+///////////////////////////////////////////////////////////
+
+model MessageReceipt {
+  id                  String   @id @default(uuid())
+
+  messageId           String
+
+  userId              String
+
+  deliveredAt         DateTime?
+
+  readAt              DateTime?
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([messageId, userId])
+
+  @@index([messageId])
+
+  @@index([userId])
+
+  @@index([readAt])
+
+  @@map("message_receipts")
+}
+
+///////////////////////////////////////////////////////////
+// MESSAGE REACTIONS
+///////////////////////////////////////////////////////////
+
+model MessageReaction {
+  id                  String   @id @default(uuid())
+
+  messageId           String
+
+  userId              String
+
+  emoji               String
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([messageId, userId, emoji])
+
+  @@index([messageId])
+
+  @@index([userId])
+
+  @@map("message_reactions")
+}
+
+///////////////////////////////////////////////////////////
+// ATTACHMENTS
+///////////////////////////////////////////////////////////
+
+model Attachment {
+  id                      String @id @default(uuid())
+
+  /////////////////////////////////////////////////////////
+  // OWNERSHIP
+  /////////////////////////////////////////////////////////
+
+  messageId               String
+
+  uploadedById            String
+
+  /////////////////////////////////////////////////////////
+  // FILE
+  /////////////////////////////////////////////////////////
+
+  type                    AttachmentType
+
+  fileName                String
+
+  originalFileName        String?
+
+  mimeType                String
+
+  extension               String?
+
+  size                    BigInt
+
+  /////////////////////////////////////////////////////////
+  // STORAGE
+  /////////////////////////////////////////////////////////
+
+  storageKey              String
+
+  thumbnailKey            String?
+
+  previewKey              String?
+
+  /////////////////////////////////////////////////////////
+  // ENCRYPTION
+  /////////////////////////////////////////////////////////
+
+  encryptedKey            String
+
+  nonce                   String
+
+  checksum                String
+
+  /////////////////////////////////////////////////////////
+  // MEDIA
+  /////////////////////////////////////////////////////////
+
+  width                   Int?
+
+  height                  Int?
+
+  duration                Int?
+
+  /////////////////////////////////////////////////////////
+  // METADATA
+  /////////////////////////////////////////////////////////
+
+  downloadCount           Int      @default(0)
+
+  uploadedAt              DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // SOFT DELETE
+  /////////////////////////////////////////////////////////
+
+  deleted                 Boolean  @default(false)
+
+  deletedAt               DateTime?
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([messageId])
+
+  @@index([uploadedById])
+
+  @@index([storageKey])
+
+  @@index([deleted])
+
+  @@map("attachments")
+}
+
+///////////////////////////////////////////////////////////
+// CONTACTS
+///////////////////////////////////////////////////////////
+
+model Contact {
+  id                  String   @id @default(uuid())
+
+  ownerId             String
+
+  contactId           String
+
+  nickname            String?
+
+  notes               String?
+
+  favorite            Boolean  @default(false)
+
+  blocked             Boolean  @default(false)
+
+  blockedAt           DateTime?
+
+  pinned              Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+
+  updatedAt           DateTime @updatedAt
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  owner User @relation("OwnerContacts", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  contact User @relation("TargetContacts", fields: [contactId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([ownerId, contactId])
+
+  @@index([ownerId])
+
+  @@index([contactId])
+
+  @@map("contacts")
+}
+
+///////////////////////////////////////////////////////////
+// CONTACT REQUESTS
+///////////////////////////////////////////////////////////
+
+model ContactRequest {
+  id              String   @id @default(uuid())
+
+  senderId        String
+
+  receiverId      String
+
+  message         String?
+
+  acceptedAt      DateTime?
+
+  declinedAt      DateTime?
+
+  cancelledAt     DateTime?
+
+  createdAt       DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  sender User @relation("ContactRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiver User @relation("ContactRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([senderId, receiverId])
+
+  @@index([senderId])
+
+  @@index([receiverId])
+
+  @@map("contact_requests")
+}
+
+///////////////////////////////////////////////////////////
+// CONVERSATION INVITATIONS
+///////////////////////////////////////////////////////////
+
+model ConversationInvitation {
+  id                  String   @id @default(uuid())
+
+  conversationId      String
+
+  inviterId           String
+
+  inviteeId           String
+
+  message             String?
+
+  expiresAt           DateTime?
+
+  acceptedAt          DateTime?
+
+  declinedAt          DateTime?
+
+  revokedAt           DateTime?
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  inviter User @relation("ConversationInviterUser", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  invitee User @relation("ConversationInviteeUser", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([conversationId])
+
+  @@index([inviteeId])
+
+  @@map("conversation_invitations")
+}
+
+///////////////////////////////////////////////////////////
+// CONVERSATION JOIN REQUESTS
+///////////////////////////////////////////////////////////
+
+model ConversationJoinRequest {
+  id                  String   @id @default(uuid())
+
+  conversationId      String
+
+  requesterId         String
+
+  message             String?
+
+  approvedAt          DateTime?
+
+  rejectedAt          DateTime?
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  requester User @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([conversationId, requesterId])
+
+  @@index([conversationId])
+
+  @@index([requesterId])
+
+  @@map("conversation_join_requests")
+}
+
+///////////////////////////////////////////////////////////
+// NOTIFICATIONS
+///////////////////////////////////////////////////////////
+
+model Notification {
+  id                  String @id @default(uuid())
+
+  userId              String
+
+  type                NotificationType
+
+  title               String
+
+  body                String?
+
+  payload             Json?
+
+  actionUrl           String?
+
+  read                Boolean @default(false)
+
+  readAt              DateTime?
+
+  dismissed           Boolean @default(false)
+
+  dismissedAt         DateTime?
+
+  expiresAt           DateTime?
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([userId])
+
+  @@index([read])
+
+  @@index([dismissed])
+
+  @@index([expiresAt])
+
+  @@index([createdAt])
+
+  @@map("notifications")
+}
+
+///////////////////////////////////////////////////////////
+// USER BLOCKS
+///////////////////////////////////////////////////////////
+
+model UserBlock {
+  id                  String @id @default(uuid())
+
+  blockerId           String
+
+  blockedId           String
+
+  reason              String?
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  blocker User @relation("UserBlocksInitiated", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blocked User @relation("UserBlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([blockerId, blockedId])
+
+  @@index([blockerId])
+
+  @@index([blockedId])
+
+  @@map("user_blocks")
+}
+
+///////////////////////////////////////////////////////////
+// MESSAGE MENTIONS
+///////////////////////////////////////////////////////////
+
+model MessageMention {
+  id                  String @id @default(uuid())
+
+  messageId           String
+
+  mentionedUserId     String
+
+  createdAt           DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  mentionedUser User @relation(fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@unique([messageId, mentionedUserId])
+
+  @@index([messageId])
+
+  @@index([mentionedUserId])
+
+  @@map("message_mentions")
+}
+
+///////////////////////////////////////////////////////////
+// MESSAGE EDIT HISTORY
+///////////////////////////////////////////////////////////
+
+model MessageEdit {
+  id                  String @id @default(uuid())
+
+  messageId           String
+
+  encryptedContent    String
+
+  nonce               String
+
+  editedById          String
+
+  editedAt            DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  editedBy User @relation(fields: [editedById], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([messageId])
+
+  @@index([editedById])
+
+  @@map("message_edits")
+}
+
+///////////////////////////////////////////////////////////
+// PINNED MESSAGES
+///////////////////////////////////////////////////////////
+
+model PinnedMessage {
+  id                  String @id @default(uuid())
+
+  conversationId      String
+
+  messageId           String @unique
+
+  pinnedById          String
+
+  pinnedAt            DateTime @default(now())
+
+  /////////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////////
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  pinnedBy User @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
+
+  /////////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////////
+
+  @@index([conversationId])
+
+  @@index([pinnedById])
+
+  @@map("pinned_messages")
+}
