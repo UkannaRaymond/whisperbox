@@ -4,7 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  output: "standalone",
+  output: process.env.VERCEL ? undefined : "standalone",
 
   experimental: {
     serverActions: {
