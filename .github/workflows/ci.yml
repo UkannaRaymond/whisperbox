@@ -84,10 +84,11 @@ jobs:
       REDIS_URL: "redis://localhost:6379"
       AUTH_SECRET: "ci-test-secret-not-for-production-use-only"
       AUTH_URL: "http://localhost:3000"
-      R2_BUCKET: "ci-bucket"
-      R2_ACCESS_KEY: "ci-access-key"
-      R2_SECRET_KEY: "ci-secret-key"
-      R2_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+      R2_BUCKET: ci-bucket
+      AWS_ACCESS_KEY_ID: ci-access-key
+      AWS_SECRET_ACCESS_KEY: ci-secret-key
+      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
@@ -116,10 +117,11 @@ jobs:
       REDIS_URL: "redis://localhost:6379"
       AUTH_SECRET: "ci-build-secret-not-for-production-use-only"
       AUTH_URL: "http://localhost:3000"
-      R2_BUCKET: "ci-bucket"
-      R2_ACCESS_KEY: "ci-access-key"
-      R2_SECRET_KEY: "ci-secret-key"
-      R2_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+      R2_BUCKET: ci-bucket
+      AWS_ACCESS_KEY_ID: ci-access-key
+      AWS_SECRET_ACCESS_KEY: ci-secret-key
+      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
@@ -172,10 +174,11 @@ jobs:
       REDIS_URL: "redis://localhost:6379"
       AUTH_SECRET: "ci-e2e-secret-not-for-production-use-only-000000"
       AUTH_URL: "http://localhost:3000"
-      R2_BUCKET: "ci-bucket"
-      R2_ACCESS_KEY: "ci-access-key"
-      R2_SECRET_KEY: "ci-secret-key"
-      R2_ENDPOINT: "https://ci.r2.cloudflarestorage.com"
+      R2_BUCKET: ci-bucket
+      AWS_ACCESS_KEY_ID: ci-access-key
+      AWS_SECRET_ACCESS_KEY: ci-secret-key
+      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
