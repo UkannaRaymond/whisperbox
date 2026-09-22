@@ -3,10 +3,10 @@ test("landing page renders and links to register/login", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: /messages only you and your contacts can read/i }),
+    page.getByRole("heading", { name: /messaging that stays between you and them/i }),
   ).toBeVisible();
 
-  await expect(page.getByRole("link", { name: /create an account/i })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: /get started/i })).toHaveAttribute(
     "href",
     "/register",
   );
