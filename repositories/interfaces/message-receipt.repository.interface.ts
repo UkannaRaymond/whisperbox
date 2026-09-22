@@ -1,4 +1,4 @@
-import type { MessageReceipt } from "@prisma/client";
+import { MessageReceipt } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 export interface CreateMessageReceiptInput {

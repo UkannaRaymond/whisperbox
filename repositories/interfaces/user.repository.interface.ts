@@ -1,4 +1,4 @@
-import type { User, UserProfile, UserStatus } from "@prisma/client";
+import { User, UserProfile, UserStatus } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 /**

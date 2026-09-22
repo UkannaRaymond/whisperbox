@@ -2,13 +2,14 @@ import { repositories } from "../repositories/prisma";
 import { NotFoundError, ConflictError } from "../errors";
 import { lookupUser } from "./user.service";
 import type { UserWithProfile } from "../repositories/interfaces/user.repository.interface";
-import type { Contact } from "@prisma/client";
+
 import type {
   AddContactDto,
   UpdateContactDto,
   ListContactsQueryDto,
   ContactResponseDto,
 } from "../schemas/contact.schema";
+import { Contact } from "@/lib/generated/prisma/client";
 
 /**
  * Contacts service — sits on top of `repositories.contacts`

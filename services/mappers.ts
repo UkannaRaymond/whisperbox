@@ -1,4 +1,3 @@
-import type { User, UserProfile, Conversation, Message, Attachment } from "@prisma/client";
 import type { UserResponseDto } from "../schemas/user.schema";
 import type { ConversationResponseDto } from "../schemas/conversation.schema";
 import type { MessageResponseDto } from "../schemas/message.schema";
@@ -7,6 +6,13 @@ import type {
   ConversationOtherMember,
   ConversationLastMessagePreview,
 } from "../repositories/interfaces/conversation.repository.interface";
+import {
+  Attachment,
+  Conversation,
+  Message,
+  User,
+  UserProfile,
+} from "@/lib/generated/prisma/client";
 
 export function toUserResponse(user: User & { profile: UserProfile | null }): UserResponseDto {
   const profile = user.profile;

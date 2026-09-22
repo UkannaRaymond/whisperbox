@@ -1,9 +1,9 @@
-import type {
+import {
   Conversation,
   ConversationType,
   ConversationVisibility,
   MemberRole,
-} from "@prisma/client";
+} from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 /**

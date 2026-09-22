@@ -1,10 +1,10 @@
-import type { PrismaClient, ConversationMember } from "@prisma/client";
 import type {
   IConversationMemberRepository,
   CreateConversationMemberInput,
   UpdateConversationMemberInput,
 } from "../interfaces/conversation-member.repository.interface";
 import { NotFoundError } from "../../errors";
+import { ConversationMember, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class ConversationMemberRepository implements IConversationMemberRepository {
   constructor(private readonly prisma: PrismaClient) {}

@@ -1,10 +1,10 @@
-import type { PrismaClient, EncryptedMessageKey } from "@prisma/client";
 import type {
   IEncryptedMessageKeyRepository,
   CreateEncryptedMessageKeyInput,
   UpdateEncryptedMessageKeyInput,
 } from "../interfaces/encrypted-message-key.repository.interface";
 import { NotFoundError } from "../../errors";
+import { EncryptedMessageKey, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class EncryptedMessageKeyRepository implements IEncryptedMessageKeyRepository {
   constructor(private readonly prisma: PrismaClient) {}

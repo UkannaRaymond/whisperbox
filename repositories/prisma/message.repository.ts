@@ -1,4 +1,3 @@
-import type { PrismaClient, Message, Prisma } from "@prisma/client";
 import type {
   IMessageRepository,
   CreateMessageInput,
@@ -6,6 +5,7 @@ import type {
   MessageWithViewerKey,
 } from "../interfaces/message.repository.interface";
 import { NotFoundError } from "../../errors";
+import { Message, Prisma, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class MessageRepository implements IMessageRepository {
   constructor(private readonly prisma: PrismaClient) {}

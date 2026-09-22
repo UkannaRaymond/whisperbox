@@ -1,6 +1,6 @@
 import { repositories } from "../repositories/prisma";
 import { NotFoundError, ForbiddenError } from "../errors";
-import type { Notification } from "@prisma/client";
+import type { Notification } from "@/lib/generated/prisma/client";
 import type {
   ListNotificationsQueryDto,
   NotificationResponseDto,

@@ -1,4 +1,4 @@
-import type { PrismaClient, Notification, Prisma } from "@prisma/client";
+import type { PrismaClient, Notification, Prisma } from "@/lib/generated/prisma/client";
 import type {
   INotificationRepository,
   CreateNotificationInput,

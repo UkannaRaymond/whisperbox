@@ -1,10 +1,10 @@
-import type { PrismaClient, Attachment } from "@prisma/client";
 import type {
   IAttachmentRepository,
   CreateAttachmentInput,
   UpdateAttachmentInput,
 } from "../interfaces/attachment.repository.interface";
 import { NotFoundError } from "../../errors";
+import { Attachment, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class AttachmentRepository implements IAttachmentRepository {
   constructor(private readonly prisma: PrismaClient) {}

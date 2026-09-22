@@ -1,10 +1,10 @@
-import type { PrismaClient, Device } from "@prisma/client";
 import type {
   IDeviceRepository,
   CreateUserDeviceInput,
   UpdateUserDeviceInput,
 } from "../interfaces/device.repository.interface";
 import { NotFoundError } from "../../errors";
+import { Device, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class DeviceRepository implements IDeviceRepository {
   constructor(private readonly prisma: PrismaClient) {}

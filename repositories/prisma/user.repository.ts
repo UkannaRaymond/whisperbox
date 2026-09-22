@@ -1,5 +1,3 @@
-import type { PrismaClient, User, UserProfile, UserStatus } from "@prisma/client";
-import { Prisma } from "@prisma/client";
 import type {
   IUserRepository,
   UserWithProfile,
@@ -7,6 +5,7 @@ import type {
   UpdateUserProfileInput,
 } from "../interfaces/user.repository.interface";
 import { NotFoundError, ConflictError } from "../../errors";
+import { Prisma, PrismaClient, User, UserProfile, UserStatus } from "@/lib/generated/prisma/client";
 
 /**
  * `User` (Better Auth's own table — id, email, name, image, ...) joined
