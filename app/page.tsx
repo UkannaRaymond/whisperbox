@@ -5,7 +5,7 @@ import { HeroChatDemo } from "@/components/landing/hero-chat-demo";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Private Messaging, Without the Trust",
