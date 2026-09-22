@@ -12,7 +12,8 @@ import { useIdentityStore } from "@/features/auth/store/identity-store";
 
 import type { ConversationResponseDto } from "@/schemas/conversation.schema";
 import type { ContactResponseDto } from "@/schemas/contact.schema";
-import { MessageSearchResult, useSearch } from "@/features/chat/hooks/use-search";
+import type { MessageSearchResult } from "@/features/chat/hooks/use-search";
+import { useSearch } from "@/features/chat/hooks/use-search";
 
 /** Search — the destination behind the icon rail's "Search" button, which previously only focused the sidebar's inline conversation-name filter. See use-search.ts's doc comment for what this can and can't find, and why. */
 export function SearchPanel() {
@@ -53,7 +54,7 @@ export function SearchPanel() {
 
           {isSearching && !hasAnyResults && !isLoadingMessages && (
             <p className="text-muted-foreground py-16 text-center text-sm">
-              No results for "{query}".
+              No results for &quot;{query}&quot;.
             </p>
           )}
 

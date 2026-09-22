@@ -5,6 +5,13 @@ import { HeroChatDemo } from "@/components/landing/hero-chat-demo";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Private Messaging, Without the Trust",
+  description:
+    "WhisperBox provides end-to-end encrypted messaging where your conversations are encrypted on your device before they are sent.",
+};
 
 const FEATURES = [
   {
@@ -47,8 +54,8 @@ export default function LandingPage() {
 
           <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 pt-10 pb-20 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-16 lg:pb-28">
             <div className="relative z-10">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/55 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-md">
-                <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+              <div className="border-primary/20 bg-background/55 text-primary mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur-md">
+                <span className="bg-primary size-1.5 animate-pulse rounded-full" />
                 Private by design
               </div>
               <h1 className="max-w-xl text-[42px] leading-[1.02] font-bold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">
@@ -78,7 +85,10 @@ export default function LandingPage() {
             </div>
 
             <div className="relative z-10 lg:translate-y-2">
-              <div className="absolute -inset-5 -z-10 rounded-[2rem] bg-primary/10 blur-2xl" aria-hidden="true" />
+              <div
+                className="bg-primary/10 absolute -inset-5 -z-10 rounded-[2rem] blur-2xl"
+                aria-hidden="true"
+              />
               <HeroChatDemo />
             </div>
           </div>

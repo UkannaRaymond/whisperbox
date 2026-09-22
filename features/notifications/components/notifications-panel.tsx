@@ -54,14 +54,14 @@ export function NotificationsPanel() {
 
           {isError && (
             <p className="text-destructive px-6 py-16 text-center text-sm">
-              Couldn't load your notifications. Try refreshing.
+              Couldn&apos;t load your notifications. Try refreshing.
             </p>
           )}
 
           {!isLoading && !isError && notifications?.length === 0 && (
             <div className="text-muted-foreground flex flex-col items-center gap-2 px-6 py-16 text-center text-sm">
               <Bell className="size-8" aria-hidden="true" />
-              <p>You're all caught up.</p>
+              <p>You&apos;re all caught up.</p>
             </div>
           )}
 
@@ -95,7 +95,11 @@ function NotificationRow({ notification }: { notification: NotificationResponseD
         !notification.read && "bg-primary/5",
       )}
     >
-      <button type="button" onClick={handleClick} className="flex flex-1 items-start gap-3 text-left">
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex flex-1 items-start gap-3 text-left"
+      >
         <div
           className={cn(
             "bg-muted mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full",

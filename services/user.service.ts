@@ -1,7 +1,6 @@
 import { repositories } from "../repositories/prisma";
 import { NotFoundError } from "../errors";
 import { toUserResponse } from "./mappers";
-import type { UserWithProfile } from "../repositories/interfaces/user.repository.interface";
 import type { CreateProfileDto, UpdateMeDto, UserResponseDto } from "../schemas/user.schema";
 
 /**

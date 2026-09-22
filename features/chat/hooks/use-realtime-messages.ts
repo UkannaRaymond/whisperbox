@@ -7,7 +7,7 @@ import { useSession } from "@/lib/auth-client";
 import * as OfflineDb from "@/features/offline/services/offline-db";
 import { timelineQueryKey } from "./use-conversation-timeline";
 import type { LocalMessage } from "@/features/offline/types/offline.types";
-import {
+import type {
   MessageDeliveredPayload,
   MessageReadPayload,
   SocketAttachmentPayload,

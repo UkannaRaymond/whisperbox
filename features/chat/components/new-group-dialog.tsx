@@ -98,7 +98,9 @@ export function NewGroupDialog({ open, onOpenChange }: NewGroupDialogProps) {
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>New group</DialogTitle>
-            <DialogDescription>Name the group and pick members from your contacts.</DialogDescription>
+            <DialogDescription>
+              Name the group and pick members from your contacts.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -123,7 +125,7 @@ export function NewGroupDialog({ open, onOpenChange }: NewGroupDialogProps) {
               )}
               {!isLoadingContacts && contacts?.length === 0 && (
                 <p className="text-muted-foreground text-sm">
-                  You don't have any contacts yet — add some first.
+                  You don&apos;t have any contacts yet — add some first.
                 </p>
               )}
               {!!contacts?.length && (
@@ -133,7 +135,10 @@ export function NewGroupDialog({ open, onOpenChange }: NewGroupDialogProps) {
                       .filter((contact) => !contact.blocked)
                       .map((contact) => {
                         const label =
-                          contact.nickname ?? contact.user.displayName ?? contact.user.username ?? "Unknown";
+                          contact.nickname ??
+                          contact.user.displayName ??
+                          contact.user.username ??
+                          "Unknown";
                         return (
                           <label
                             key={contact.id}
@@ -173,7 +178,9 @@ export function NewGroupDialog({ open, onOpenChange }: NewGroupDialogProps) {
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting || !name.trim() || selected.size === 0}>
-              {isSubmitting ? "Creating…" : `Create group${selected.size ? ` (${selected.size})` : ""}`}
+              {isSubmitting
+                ? "Creating…"
+                : `Create group${selected.size ? ` (${selected.size})` : ""}`}
             </Button>
           </DialogFooter>
         </form>
