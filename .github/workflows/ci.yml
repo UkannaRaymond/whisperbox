@@ -17,8 +17,10 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
+
     env:
       DATABASE_URL: "postgresql://whisperbox:whisperbox@localhost:5432/whisperbox"
+
     steps:
       - uses: actions/checkout@v5
 
@@ -36,6 +38,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v5
 
@@ -87,7 +90,7 @@ jobs:
       R2_BUCKET: ci-bucket
       AWS_ACCESS_KEY_ID: ci-access-key
       AWS_SECRET_ACCESS_KEY: ci-secret-key
-      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_ENDPOINT_URL_S3: "https://ci.r2.cloudflarestorage.com"
       AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
@@ -120,7 +123,7 @@ jobs:
       R2_BUCKET: ci-bucket
       AWS_ACCESS_KEY_ID: ci-access-key
       AWS_SECRET_ACCESS_KEY: ci-secret-key
-      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_ENDPOINT_URL_S3: "https://ci.r2.cloudflarestorage.com"
       AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
@@ -177,7 +180,7 @@ jobs:
       R2_BUCKET: ci-bucket
       AWS_ACCESS_KEY_ID: ci-access-key
       AWS_SECRET_ACCESS_KEY: ci-secret-key
-      AWS_ENDPOINT_URL_S3: https://ci.r2.cloudflarestorage.com
+      AWS_ENDPOINT_URL_S3: "https://ci.r2.cloudflarestorage.com"
       AWS_REGION: auto
       NEXT_PUBLIC_SOCKET_URL: "http://localhost:3001"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
@@ -195,7 +198,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec prisma generate
       - run: pnpm exec prisma migrate deploy
+
+      # Playwright starts .next/standalone/server.js,
+      # so the standalone build must exist in this job.
+      - run: pnpm run build
+
       - run: pnpm exec playwright install --with-deps chromium
+
       - run: pnpm run test:e2e
 
       - uses: actions/upload-artifact@v4
