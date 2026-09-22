@@ -26,7 +26,11 @@ export async function createConversation(
       userId,
       otherUserId,
     );
-    if (existing) return toConversationResponse(existing);
+    if (existing) {
+      const enriched = await repositories.conversations.findByIdForViewer(existing.id, userId);
+      if (!enriched) throw new NotFoundError("Conversation", existing.id);
+      return toConversationResponse(enriched);
+    }
   }
 
   const conversation = await repositories.conversations.create({

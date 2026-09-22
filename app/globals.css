@@ -6,98 +6,136 @@
 /*
   WhisperBox design tokens.
 
-  Direction: "sealed correspondence" — a near-black ink surface paired with
-  a muted violet "cipher" accent (the color of the encryption itself, not
-  a generic brand color), and a cool paper white for light mode. Avoids the
-  cream+terracotta and near-black+neon-green defaults.
+  Direction: a familiar messenger layout (rail / chat list / conversation,
+  tailed bubbles, doodle wallpaper, tick receipts) in WhisperBox's own colors —
+  a deep "jade" instead of the usual messenger green, on a warm paper wallpaper
+  in light mode and a deep teal-black in dark mode.
+
+  Retheming: change --primary / --brand-deep (and the bubble tokens) below;
+  every screen reads from these variables.
 */
 :root {
   --radius: 0.625rem;
 
-  --background: #f8f9fb;
-  --foreground: #0b0d14;
+  /* Surfaces */
+  --background: #ffffff;
+  --foreground: #0e1c1f;
 
   --card: #ffffff;
-  --card-foreground: #0b0d14;
+  --card-foreground: #0e1c1f;
 
   --popover: #ffffff;
-  --popover-foreground: #0b0d14;
+  --popover-foreground: #0e1c1f;
 
-  --primary: #5b46e0;
-  --primary-foreground: #f8f9fb;
+  /* Brand */
+  --primary: #067f62;
+  --primary-foreground: #ffffff;
+  --brand-deep: #067f62;
+  --brand-deep-foreground: #ffffff;
 
-  --secondary: #eef0f4;
-  --secondary-foreground: #0b0d14;
+  --secondary: #f0f2f2;
+  --secondary-foreground: #0e1c1f;
 
-  --muted: #eef0f4;
-  --muted-foreground: #5b6072;
+  --muted: #f0f2f2;
+  --muted-foreground: #5b6e74;
 
-  --accent: #e8e4fb;
-  --accent-foreground: #372a91;
+  --accent: #f0f2f2;
+  --accent-foreground: #0e1c1f;
 
   --destructive: #c8412e;
-  --destructive-foreground: #fdf5f4;
+  --destructive-foreground: #ffffff;
 
   --success: #1f9d6e;
-  --success-foreground: #f8f9fb;
+  --success-foreground: #ffffff;
 
-  --border: #e1e3e9;
-  --input: #e1e3e9;
-  --ring: #5b46e0;
+  --border: #e3e8e9;
+  --input: #cfd7d9;
+  --ring: #067f62;
 
-  --sidebar: #f3f4f7;
-  --sidebar-foreground: #0b0d14;
-  --sidebar-primary: #5b46e0;
-  --sidebar-primary-foreground: #f8f9fb;
-  --sidebar-accent: #e8e4fb;
-  --sidebar-accent-foreground: #372a91;
-  --sidebar-border: #e1e3e9;
-  --sidebar-ring: #5b46e0;
+  /* Messenger chrome */
+  --panel: #f0f2f2; /* top bars, composer, rail */
+  --rail: #f0f2f2;
+  --chat-bg: #eee8de; /* conversation wallpaper */
+  --chat-doodle: #b7a98f;
+  --chat-doodle-opacity: 0.32;
+  --bubble-in: #ffffff;
+  --bubble-in-foreground: #0e1c1f;
+  --bubble-out: #d5f4dd;
+  --bubble-out-foreground: #0e1c1f;
+  --bubble-meta: #5b6e74;
+  --tick-read: #2f9fd9;
+  --notice: #fdf1c7;
+  --notice-foreground: #5c5230;
 
-  --font-sans: var(--font-geist-sans);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0e1c1f;
+  --sidebar-primary: #067f62;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f2f2;
+  --sidebar-accent-foreground: #0e1c1f;
+  --sidebar-border: #e3e8e9;
+  --sidebar-ring: #067f62;
+
+  --font-sans: var(--font-figtree);
   --font-mono: var(--font-geist-mono);
 }
 
 .dark {
-  --background: #0b0d14;
-  --foreground: #eef0f4;
+  --background: #101a1e;
+  --foreground: #e6edef;
 
-  --card: #12141f;
-  --card-foreground: #eef0f4;
+  --card: #16232a;
+  --card-foreground: #e6edef;
 
-  --popover: #12141f;
-  --popover-foreground: #eef0f4;
+  --popover: #1b2a31;
+  --popover-foreground: #e6edef;
 
-  --primary: #8b7bf0;
-  --primary-foreground: #0b0d14;
+  --primary: #25c39b;
+  --primary-foreground: #04231b;
+  --brand-deep: #0c4a3d;
+  --brand-deep-foreground: #ffffff;
 
-  --secondary: #1a1d2b;
-  --secondary-foreground: #eef0f4;
+  --secondary: #1f2c32;
+  --secondary-foreground: #e6edef;
 
-  --muted: #1a1d2b;
-  --muted-foreground: #8b8fa3;
+  --muted: #1f2c32;
+  --muted-foreground: #8a9ba3;
 
-  --accent: #232544;
-  --accent-foreground: #c7bdfa;
+  --accent: #223038;
+  --accent-foreground: #e6edef;
 
-  --destructive: #e6604a;
-  --destructive-foreground: #0b0d14;
+  --destructive: #ee6a55;
+  --destructive-foreground: #1a0906;
 
   --success: #2fbf83;
-  --success-foreground: #0b0d14;
+  --success-foreground: #04231b;
 
-  --border: #21243570;
-  --input: #21243590;
-  --ring: #8b7bf0;
+  --border: #23333a;
+  --input: #2f424a;
+  --ring: #25c39b;
 
-  --sidebar: #0f111a;
-  --sidebar-foreground: #eef0f4;
-  --sidebar-primary: #8b7bf0;
-  --sidebar-primary-foreground: #0b0d14;
-  --sidebar-accent: #232544;
-  --sidebar-accent-foreground: #c7bdfa;
-  --sidebar-border: #21243570;
-  --sidebar-ring: #8b7bf0;
+  --panel: #1f2c32;
+  --rail: #16232a;
+  --chat-bg: #0c171b;
+  --chat-doodle: #4a6872;
+  --chat-doodle-opacity: 0.38;
+  --bubble-in: #1f2c32;
+  --bubble-in-foreground: #e6edef;
+  --bubble-out: #0b5a49;
+  --bubble-out-foreground: #eafaf5;
+  --bubble-meta: #93a4ab;
+  --tick-read: #58c2f2;
+  --notice: #1d2a31;
+  --notice-foreground: #e9c877;
+
+  --sidebar: #101a1e;
+  --sidebar-foreground: #e6edef;
+  --sidebar-primary: #25c39b;
+  --sidebar-primary-foreground: #04231b;
+  --sidebar-accent: #223038;
+  --sidebar-accent-foreground: #e6edef;
+  --sidebar-border: #23333a;
+  --sidebar-ring: #25c39b;
 }
 
 @theme inline {
@@ -111,6 +149,8 @@
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-deep-foreground: var(--brand-deep-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -125,6 +165,18 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-panel: var(--panel);
+  --color-rail: var(--rail);
+  --color-chat: var(--chat-bg);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-in-foreground: var(--bubble-in-foreground);
+  --color-bubble-out: var(--bubble-out);
+  --color-bubble-out-foreground: var(--bubble-out-foreground);
+  --color-bubble-meta: var(--bubble-meta);
+  --color-tick-read: var(--tick-read);
+  --color-notice: var(--notice);
+  --color-notice-foreground: var(--notice-foreground);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -149,8 +201,14 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Always-visible focus states for keyboard navigation (WCAG AA). */
@@ -158,6 +216,57 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+}
+
+/*
+  Conversation wallpaper. The doodle is a mask over a flat color so a single
+  SVG tile works in both themes. Put `.chat-wallpaper` on a NON-scrolling
+  wrapper and scroll an inner element, otherwise the pattern scrolls away.
+*/
+.chat-wallpaper {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--chat-bg);
+}
+
+.chat-wallpaper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--chat-doodle);
+  opacity: var(--chat-doodle-opacity);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22 viewBox=%220 0 240 240%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cg transform=%22translate(14 10) rotate(-8 12 12) scale(1.0)%22%3E%3Cpath d=%22M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H11l-4 3.5V16H7a3 3 0 0 1-3-3z%22/%3E%3C/g%3E%3Cg transform=%22translate(92 26) rotate(10 12 12) scale(0.95)%22%3E%3Crect x=%225%22 y=%2211%22 width=%2214%22 height=%229%22 rx=%222%22/%3E%3Cpath d=%22M8 11V8a4 4 0 0 1 8 0v3%22/%3E%3Cpath d=%22M12 14.5v2%22/%3E%3C/g%3E%3Cg transform=%22translate(168 8) rotate(14 12 12) scale(0.85)%22%3E%3Cpath d=%22m12 4 2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z%22/%3E%3C/g%3E%3Cg transform=%22translate(40 72) rotate(12 12 12) scale(0.9)%22%3E%3Cpath d=%22M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.4-7 10-7 10z%22/%3E%3C/g%3E%3Cg transform=%22translate(118 84) rotate(-14 12 12) scale(1.0)%22%3E%3Ccircle cx=%228%22 cy=%2212%22 r=%223.5%22/%3E%3Cpath d=%22M11.5 12H20M17 12v3M20 12v2.5%22/%3E%3C/g%3E%3Cg transform=%22translate(190 74) rotate(-6 12 12) scale(0.9)%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%228%22/%3E%3Cpath d=%22M8.5 14a4 4 0 0 0 7 0M9 9.5v.5M15 9.5v.5%22/%3E%3C/g%3E%3Cg transform=%22translate(8 138) rotate(18 12 12) scale(0.95)%22%3E%3Cpath d=%22M16 8v8a4 4 0 0 1-8 0V7a2.6 2.6 0 0 1 5.2 0v8.5a1.2 1.2 0 0 1-2.4 0V8.5%22/%3E%3C/g%3E%3Cg transform=%22translate(76 150) rotate(-10 12 12) scale(0.95)%22%3E%3Cpath d=%22M4 12 20 4l-4 16-4.5-6.5z%22/%3E%3C/g%3E%3Cg transform=%22translate(152 142) rotate(8 12 12) scale(0.9)%22%3E%3Cpath d=%22M19 14.5A7.5 7.5 0 0 1 9.5 5 7.5 7.5 0 1 0 19 14.5z%22/%3E%3C/g%3E%3Cg transform=%22translate(206 140) rotate(-12 12 12) scale(0.85)%22%3E%3Cpath d=%22M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0%22/%3E%3C/g%3E%3Cg transform=%22translate(108 200) rotate(8 12 12) scale(0.85)%22%3E%3Cpath d=%22M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H11l-4 3.5V16H7a3 3 0 0 1-3-3z%22/%3E%3C/g%3E%3Cg transform=%22translate(34 204) rotate(-14 12 12) scale(0.8)%22%3E%3Cpath d=%22M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.4-7 10-7 10z%22/%3E%3C/g%3E%3Cg transform=%22translate(196 204) rotate(-8 12 12) scale(0.85)%22%3E%3Crect x=%225%22 y=%2211%22 width=%2214%22 height=%229%22 rx=%222%22/%3E%3Cpath d=%22M8 11V8a4 4 0 0 1 8 0v3%22/%3E%3Cpath d=%22M12 14.5v2%22/%3E%3C/g%3E%3Cg transform=%22translate(70 108) rotate(6 12 12) scale(0.6)%22%3E%3Cpath d=%22m12 4 2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z%22/%3E%3C/g%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22 viewBox=%220 0 240 240%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cg transform=%22translate(14 10) rotate(-8 12 12) scale(1.0)%22%3E%3Cpath d=%22M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H11l-4 3.5V16H7a3 3 0 0 1-3-3z%22/%3E%3C/g%3E%3Cg transform=%22translate(92 26) rotate(10 12 12) scale(0.95)%22%3E%3Crect x=%225%22 y=%2211%22 width=%2214%22 height=%229%22 rx=%222%22/%3E%3Cpath d=%22M8 11V8a4 4 0 0 1 8 0v3%22/%3E%3Cpath d=%22M12 14.5v2%22/%3E%3C/g%3E%3Cg transform=%22translate(168 8) rotate(14 12 12) scale(0.85)%22%3E%3Cpath d=%22m12 4 2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z%22/%3E%3C/g%3E%3Cg transform=%22translate(40 72) rotate(12 12 12) scale(0.9)%22%3E%3Cpath d=%22M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.4-7 10-7 10z%22/%3E%3C/g%3E%3Cg transform=%22translate(118 84) rotate(-14 12 12) scale(1.0)%22%3E%3Ccircle cx=%228%22 cy=%2212%22 r=%223.5%22/%3E%3Cpath d=%22M11.5 12H20M17 12v3M20 12v2.5%22/%3E%3C/g%3E%3Cg transform=%22translate(190 74) rotate(-6 12 12) scale(0.9)%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%228%22/%3E%3Cpath d=%22M8.5 14a4 4 0 0 0 7 0M9 9.5v.5M15 9.5v.5%22/%3E%3C/g%3E%3Cg transform=%22translate(8 138) rotate(18 12 12) scale(0.95)%22%3E%3Cpath d=%22M16 8v8a4 4 0 0 1-8 0V7a2.6 2.6 0 0 1 5.2 0v8.5a1.2 1.2 0 0 1-2.4 0V8.5%22/%3E%3C/g%3E%3Cg transform=%22translate(76 150) rotate(-10 12 12) scale(0.95)%22%3E%3Cpath d=%22M4 12 20 4l-4 16-4.5-6.5z%22/%3E%3C/g%3E%3Cg transform=%22translate(152 142) rotate(8 12 12) scale(0.9)%22%3E%3Cpath d=%22M19 14.5A7.5 7.5 0 0 1 9.5 5 7.5 7.5 0 1 0 19 14.5z%22/%3E%3C/g%3E%3Cg transform=%22translate(206 140) rotate(-12 12 12) scale(0.85)%22%3E%3Cpath d=%22M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0%22/%3E%3C/g%3E%3Cg transform=%22translate(108 200) rotate(8 12 12) scale(0.85)%22%3E%3Cpath d=%22M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H11l-4 3.5V16H7a3 3 0 0 1-3-3z%22/%3E%3C/g%3E%3Cg transform=%22translate(34 204) rotate(-14 12 12) scale(0.8)%22%3E%3Cpath d=%22M12 20s-7-4.6-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.4-7 10-7 10z%22/%3E%3C/g%3E%3Cg transform=%22translate(196 204) rotate(-8 12 12) scale(0.85)%22%3E%3Crect x=%225%22 y=%2211%22 width=%2214%22 height=%229%22 rx=%222%22/%3E%3Cpath d=%22M8 11V8a4 4 0 0 1 8 0v3%22/%3E%3Cpath d=%22M12 14.5v2%22/%3E%3C/g%3E%3Cg transform=%22translate(70 108) rotate(6 12 12) scale(0.6)%22%3E%3Cpath d=%22m12 4 2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z%22/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-size: 240px 240px;
+  mask-size: 240px 240px;
+}
+
+/* Chat bubbles: soft shadow + optional tail on the first bubble of a run. */
+.bubble {
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
+}
+
+.bubble-tail-in::before,
+.bubble-tail-out::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 13px;
+}
+
+.bubble-tail-in::before {
+  left: -8px;
+  background: var(--bubble-in);
+  clip-path: path("M8 0 L8 13 C6.6 9.6 3.6 3.4 0 0 Z");
+}
+
+.bubble-tail-out::before {
+  right: -8px;
+  background: var(--bubble-out);
+  clip-path: path("M0 0 L0 13 C1.4 9.6 4.4 3.4 8 0 Z");
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -186,4 +295,25 @@
 
 .pulse-soft {
   animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+
+/* Landing-page polish: keep the product preview visually separated from the wallpaper in both themes. */
+.hero-chat-demo {
+  isolation: isolate;
+}
+
+.dark .hero-chat-demo {
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.38), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-chat-demo {
+    animation: hero-float 7s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }

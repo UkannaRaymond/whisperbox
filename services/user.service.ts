@@ -1,30 +1,8 @@
 import { repositories } from "../repositories/prisma";
 import { NotFoundError } from "../errors";
+import { toUserResponse } from "./mappers";
 import type { UserWithProfile } from "../repositories/interfaces/user.repository.interface";
 import type { CreateProfileDto, UpdateMeDto, UserResponseDto } from "../schemas/user.schema";
-
-/**
- * Maps a Better-Auth `User` + WhisperBox `UserProfile` pair to the public
- * response DTO. Kept local to this service (rather than added to the
- * shared `services/mappers.ts`) so this fix doesn't touch that file's
- * other mapper functions, which target conversations/messages/attachments
- * and have their own, separate schema-drift issues outside this change's
- * scope.
- */
-function toUserResponse(user: UserWithProfile): UserResponseDto {
-  const profile = user.profile;
-  return {
-    id: user.id,
-    email: user.email,
-    username: profile?.username ?? null,
-    displayName: profile?.displayName ?? user.name,
-    avatarUrl: profile?.avatarUrl ?? user.image,
-    bio: profile?.bio ?? null,
-    status: profile?.status ?? "OFFLINE",
-    lastSeenAt: profile?.lastSeenAt ? profile.lastSeenAt.toISOString() : null,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
 
 /**
  * Creates the caller's initial `UserProfile` row — the missing piece that

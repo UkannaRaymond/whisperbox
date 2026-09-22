@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { AppSidebar } from "@/features/chat/components/app-sidebar";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { MobileNav } from "@/features/chat/components/mobile-nav";
 import { IdentityUnlockGate } from "@/features/auth/components/identity-unlock-gate";
 import { useRequireUsername } from "@/features/auth/hooks/use-require-username";
 import { useSyncEngine } from "@/features/offline/hooks/use-sync-engine";
@@ -13,28 +16,20 @@ import { useRealtimeMessages } from "@/features/chat/hooks/use-realtime-messages
 import { usePresenceBridge } from "@/features/chat/hooks/use-presence-bridge";
 
 /**
- * Authenticated app shell (10-FRONTEND.md § UI Components: "Sidebar",
- * "Top Navigation").
+ * Authenticated app shell
  *
- * This route group previously had NO auth guard at all — every route
- * under `(app)` (e.g. `/conversations`) rendered for signed-out visitors
- * too, and `useSyncEngine()`/`useRealtimeMessages()` started
- * unconditionally on mount. For a signed-out visitor that meant the sync
- * engine's first pull (`GET /api/v1/conversations`) hit a 401 immediately
- * and threw an uncaught "Authentication required" error instead of the
- * page just redirecting to `/login`. This now checks `useSession()`
- * first: while it's resolving, nothing renders yet; once resolved, a
- * signed-out visitor is redirected to `/login` before the sidebar, sync
- * engine, or real-time bridge ever mount. `useSyncEngine`'s own
- * `enabled` gate (features/offline/hooks/use-sync-engine.ts) is a second,
- * belt-and-suspenders safeguard against the same failure mode.
- *
- * Also redirects to `/onboarding/username` if the signed-in user hasn't
+ * Redirects to `/onboarding/username` if the signed-in user hasn't
  * picked a username yet (see `useRequireUsername`'s doc comment), and
- * gates content behind unlocking this device's encryption identity.
+ * gates the whole shell behind unlocking this device's encryption identity.
+ *
+ * Desktop: rail | chat list | conversation, side by side. Phones: one screen at
+ * a time — the chat list on `/conversations`, the conversation on
+ * `/conversations/[id]`, other sections full-width — with a bottom tab bar
+ * everywhere except inside an open chat.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const isSignedIn = Boolean(sessionData?.user);
 
@@ -51,18 +46,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isSessionPending || !isSignedIn || isUsernameCheckPending) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex min-h-dvh flex-1 items-center justify-center">
         <Loader2 className="text-muted-foreground size-6 animate-spin" aria-label="Loading" />
       </div>
     );
   }
 
+  const isListRoute = pathname === "/conversations";
+  const isChatRoute = pathname.startsWith("/conversations/");
+
   return (
-    <div className="fixed inset-0 flex overflow-hidden">
-      <AppSidebar />
-      <IdentityUnlockGate>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
-      </IdentityUnlockGate>
-    </div>
+    <IdentityUnlockGate>
+      <div className="bg-background fixed inset-0 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)] md:flex-row">
+        <AppSidebar />
+        {(isListRoute || isChatRoute) && (
+          <div className="pointer-events-none absolute top-3 right-3 z-50 md:top-4 md:right-4">
+            <div className="pointer-events-auto">
+              <ThemeToggle />
+            </div>
+          </div>
+        )}
+        <main
+          className={cn(
+            "min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            isListRoute ? "hidden md:flex" : "flex",
+          )}
+        >
+          {children}
+        </main>
+        {!isChatRoute && <MobileNav />}
+      </div>
+    </IdentityUnlockGate>
   );
 }

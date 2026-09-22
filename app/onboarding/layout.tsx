@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { AuthShell } from "@/components/auth/auth-shell";
 import { useSession } from "@/lib/auth-client";
 
 /**
@@ -12,8 +12,7 @@ import { useSession } from "@/lib/auth-client";
  * `/onboarding/username`). Deliberately its own route group rather than
  * living under `(auth)`: the person is expected to already be signed in
  * at this point — this isn't a login/register screen, just the same
- * centered-card layout.
- *
+ * auth frame.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -27,21 +26,14 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   }, [isSessionPending, isSignedIn, router]);
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <Link href="/" className="text-lg font-semibold">
-            WhisperBox
-          </Link>
+    <AuthShell>
+      {isSessionPending || !isSignedIn ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="text-muted-foreground size-6 animate-spin" aria-label="Loading" />
         </div>
-        {isSessionPending || !isSignedIn ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="text-muted-foreground size-6 animate-spin" aria-label="Loading" />
-          </div>
-        ) : (
-          children
-        )}
-      </div>
-    </main>
+      ) : (
+        children
+      )}
+    </AuthShell>
   );
 }

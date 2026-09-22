@@ -8,7 +8,7 @@ function makeQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Server state (per the TRD) is owned by TanStack Query; a short
+        // Server state is owned by TanStack Query; a short
         // staleTime avoids refetch storms while keeping data reasonably
         // fresh for a real-time chat app.
         staleTime: 30 * 1000,

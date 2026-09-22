@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
 import { ShieldAlert } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 
 interface ErrorStateProps {
@@ -13,8 +11,7 @@ interface ErrorStateProps {
 }
 
 /**
- * Shared error-state UI. Every feature's "error state" (a Definition of
- * Done requirement in the TRD) should render this rather than inventing
+ * Shared error-state UI. Every feature's "error state" should render this rather than inventing
  * its own error layout, so the app has one consistent error voice.
  */
 export function ErrorState({

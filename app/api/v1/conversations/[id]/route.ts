@@ -9,15 +9,6 @@ import { ok, noContent, withErrorHandling } from "@/http/response";
 
 /**
  * GET /v1/conversations/[id] — a single conversation by id.
- *
- * This route did not exist: `features/chat/hooks/use-conversation.ts` calls
- * `GET /api/v1/conversations/{id}` as its cache-miss fallback (e.g. a deep
- * link to a conversation the sidebar hasn't synced yet), but with no
- * handler here that request 404'd, `useConversation` never resolved, and
- * `app/(app)/conversations/[id]/page.tsx` stayed stuck on its loading
- * skeleton forever — which also meant the message composer at the bottom
- * of the page never rendered, since it sits behind the
- * `isLoadingConversation || !conversation` early return.
  */
 export const GET = withErrorHandling(
   async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {

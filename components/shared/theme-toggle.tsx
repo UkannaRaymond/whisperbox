@@ -1,47 +1,35 @@
 "use client";
 
 import * as React from "react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, MonitorSmartphone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useHasMounted } from "@/hooks/use-has-mounted";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
-  const { setTheme } = useTheme();
-  const hasMounted = useHasMounted();
+export function ThemeToggle({ className }: { className?: string }) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => setMounted(true), []);
+
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Toggle theme">
-          {hasMounted ? (
-            <>
-              <Sun className="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-              <Moon className="absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-            </>
-          ) : (
-            <Sun className="opacity-0" aria-hidden="true" />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => setTheme("light")}>
-          <Sun /> Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("dark")}>
-          <Moon /> Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("system")}>
-          <MonitorSmartphone /> System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      aria-label={mounted ? `Switch to ${isDark ? "light" : "dark"} mode` : "Toggle theme"}
+      title={mounted ? `Switch to ${isDark ? "light" : "dark"} mode` : "Toggle theme"}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={cn(
+        "size-10 rounded-full border-border/80 bg-background/75 shadow-sm backdrop-blur-md hover:bg-background",
+        className,
+      )}
+    >
+      {mounted && isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      <span className="sr-only">Toggle theme</span>
+    </Button>
   );
 }

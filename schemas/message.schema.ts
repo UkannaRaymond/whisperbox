@@ -95,12 +95,7 @@ export const messageResponseSchema = z.object({
   edited: z.boolean(),
   editedAt: z.string().datetime().nullable(),
   deleted: z.boolean(),
-  // This user's own wrapped copy of the message's AES content key
-  // (EncryptedMessageKey.encryptedKey where recipientId = the requesting
-  // user), or null if none exists yet — e.g. sent before this account
-  // registered a device (features/chat/utils/resolve-recipient-keys.ts).
-  // Never another recipient's wrapped key; the server only ever resolves
-  // the caller's own (services/mappers.ts#toMessageResponse).
+
   encryptedKeyForMe: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

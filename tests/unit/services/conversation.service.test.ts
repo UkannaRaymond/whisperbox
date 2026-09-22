@@ -82,11 +82,6 @@ function fakeConversation(overrides: Partial<Record<string, unknown>> = {}) {
 describe("getConversation", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  // Regression coverage for the screenshot bug: every DIRECT conversation
-  // rendered as generic "Direct message" / "Offline" because nothing
-  // resolved who the other person actually was. This asserts the viewer
-  // context (otherMember/pinned/unreadCount/lastMessage) makes it all the
-  // way through the service layer onto the response.
   it("returns the conversation enriched with viewer context", async () => {
     findByConversationAndUser.mockResolvedValue({ leftAt: null });
     findByIdForViewer.mockResolvedValue(

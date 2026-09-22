@@ -1,13 +1,11 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Pin, Users, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Pin, Users } from "lucide-react";
 
 import { cn, avatarColorFor, initialsFor, formatConversationTimestamp } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +19,10 @@ import type { LocalConversation } from "@/features/offline/types/offline.types";
 
 /**
  * Conversation Card (10-FRONTEND.md § UI Components: "Conversation
- * Card"), rebuilt to match the reference screenshot: a real contact
- * name/avatar for DIRECT conversations (via `conversation.otherMember` —
- * previously every DIRECT conversation showed generic "Direct message" /
- * "Offline", because nothing ever resolved who the other person was),
- * a decrypted last-message preview, an unread-count badge, a pin
- * indicator, and a relative timestamp.
+ * Card"): a real contact name/avatar for DIRECT conversations (via
+ * `conversation.otherMember`), a decrypted last-message preview, an
+ * unread-count badge, a pin indicator, and a relative timestamp.
+ * Pinning is in the chevron menu that appears on hover / keyboard focus.
  */
 export function ConversationCard({
   conversation,
@@ -37,9 +33,11 @@ export function ConversationCard({
 }) {
   const { isOnline } = usePresence();
   const pinMutation = usePinConversation();
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   const otherUserId = conversation.otherMember?.userId;
   const online = otherUserId ? isOnline(otherUserId) : false;
+  const hasUnread = conversation.unreadCount > 0;
 
   const title =
     conversation.type === "GROUP"
@@ -57,107 +55,119 @@ export function ConversationCard({
     : formatConversationTimestamp(conversation.updatedAt);
 
   return (
-    <div className="group relative">
-      <Link href={`/conversations/${conversation.id}`}>
-        <motion.div
-          whileHover={{ x: 2 }}
-          transition={{ duration: 0.15 }}
-          className={cn(
-            "flex items-start gap-3 rounded-lg px-3 py-2.5 pr-8 transition-colors",
-            isActive ? "bg-accent" : "hover:bg-accent/50",
+    <div
+      className={cn(
+        "group relative transition-colors",
+        // Inset divider that starts after the avatar, like a phone chat list.
+        "after:bg-border/70 after:absolute after:right-0 after:bottom-0 after:left-[72px] after:h-px",
+        isActive ? "bg-accent" : "hover:bg-accent/60",
+      )}
+    >
+      <Link
+        href={`/conversations/${conversation.id}`}
+        aria-current={isActive ? "page" : undefined}
+        className="flex h-[72px] items-center gap-3 px-3 outline-offset-[-2px]"
+      >
+        <div className="relative shrink-0">
+          <Avatar className="size-12">
+            <AvatarImage src={avatarSrc ?? undefined} alt="" />
+            <AvatarFallback
+              style={{ backgroundColor: avatarColorFor(avatarColorSeed), color: "#0b0d14" }}
+              className="text-base"
+            >
+              {conversation.type === "GROUP" ? (
+                <Users className="size-5" aria-hidden="true" />
+              ) : (
+                initialsFor(title)
+              )}
+            </AvatarFallback>
+          </Avatar>
+          {conversation.type === "DIRECT" && online && (
+            <span
+              className="bg-primary border-background absolute right-0 bottom-0 size-3.5 rounded-full border-2"
+              role="img"
+              aria-label="Online"
+            />
           )}
-        >
-          <div className="relative shrink-0">
-            <Avatar>
-              <AvatarImage src={avatarSrc ?? undefined} alt="" />
-              <AvatarFallback
-                style={{ backgroundColor: avatarColorFor(avatarColorSeed), color: "#0b0d14" }}
-              >
-                {conversation.type === "GROUP" ? (
-                  <Users className="size-4" aria-hidden="true" />
-                ) : (
-                  initialsFor(title)
-                )}
-              </AvatarFallback>
-            </Avatar>
-            {conversation.type === "DIRECT" && (
-              <span
-                className={cn(
-                  "border-background absolute right-0 bottom-0 size-2.5 rounded-full border-2",
-                  online ? "bg-emerald-500" : "bg-muted-foreground/40",
-                )}
-                aria-label={online ? "Online" : "Offline"}
-              />
-            )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <p
+              className={cn(
+                "min-w-0 flex-1 truncate text-[16px] leading-5",
+                hasUnread ? "font-semibold" : "font-medium",
+              )}
+            >
+              {title}
+            </p>
+            <span
+              className={cn(
+                "shrink-0 text-xs tabular-nums",
+                hasUnread ? "text-primary font-medium" : "text-muted-foreground",
+              )}
+            >
+              {timestamp}
+            </span>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1">
+          <div className="mt-1 flex h-5.5 items-center gap-2">
+            <p
+              className={cn(
+                "min-w-0 flex-1 truncate text-[14px] leading-5",
+                hasUnread ? "text-foreground/85" : "text-muted-foreground",
+              )}
+            >
+              <LastMessagePreview lastMessage={conversation.lastMessage} />
+            </p>
+
+            {/* Pin + unread badge; swapped for the menu chevron on hover/focus. */}
+            <div
+              className={cn(
+                "flex shrink-0 items-center gap-1.5",
+                menuOpen ? "invisible" : "group-focus-within:invisible group-hover:invisible",
+              )}
+            >
               {conversation.pinned && (
                 <Pin
-                  className="text-muted-foreground size-3 shrink-0 fill-current"
-                  aria-hidden="true"
+                  className="text-muted-foreground size-4 shrink-0 rotate-45"
+                  aria-label="Pinned"
                 />
               )}
-              <p
-                className={cn(
-                  "truncate text-sm",
-                  conversation.unreadCount > 0 ? "font-semibold" : "font-medium",
-                )}
-              >
-                {title}
-              </p>
-              <span className="text-muted-foreground ml-auto shrink-0 text-[11px]">
-                {timestamp}
-              </span>
-            </div>
-            <div className="mt-0.5 flex items-center gap-2">
-              <p
-                className={cn(
-                  "text-muted-foreground min-w-0 flex-1 truncate text-xs",
-                  conversation.unreadCount > 0 && "text-foreground/80",
-                )}
-              >
-                <LastMessagePreview lastMessage={conversation.lastMessage} />
-                {/* No sender-name prefix for GROUP conversations
-                    ("Daniel: ...") yet — that needs the sender's display
-                    name resolved server-side the same way `otherMember`
-                    is for DIRECT conversations, and
-                    ConversationLastMessagePreviewDto only carries
-                    `senderId` right now. Showing a raw user id here would
-                    be worse than omitting it. */}
-              </p>
-              {conversation.unreadCount > 0 && (
-                <Badge className="h-4.5 min-w-4.5 shrink-0 justify-center rounded-full px-1.5 text-[10px]">
+              {hasUnread && (
+                <span
+                  className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[12px] leading-none font-semibold tabular-nums"
+                  aria-label={`${conversation.unreadCount} unread`}
+                >
                   {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
-                </Badge>
+                </span>
               )}
             </div>
           </div>
-        </motion.div>
+        </div>
       </Link>
 
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-1 size-6 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
-            aria-label="Conversation options"
-            onClick={(e) => e.preventDefault()}
+          <button
+            type="button"
+            className={cn(
+              "text-muted-foreground hover:text-foreground absolute right-3 bottom-3.5 flex size-6 items-center justify-center rounded-full",
+              menuOpen ? "visible" : "invisible group-focus-within:visible group-hover:visible",
+            )}
+            aria-label="Chat options"
           >
-            <MoreHorizontal className="size-3.5" aria-hidden="true" />
-          </Button>
+            <ChevronDown className="size-5" aria-hidden="true" />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              pinMutation.mutate({ conversationId: conversation.id, pinned: !conversation.pinned });
-            }}
+            onClick={() =>
+              pinMutation.mutate({ conversationId: conversation.id, pinned: !conversation.pinned })
+            }
           >
             <Pin className="size-4" aria-hidden="true" />
-            {conversation.pinned ? "Unpin conversation" : "Pin conversation"}
+            {conversation.pinned ? "Unpin chat" : "Pin chat"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

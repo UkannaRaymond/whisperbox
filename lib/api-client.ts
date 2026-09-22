@@ -1,16 +1,6 @@
 import type { ApiResult } from "@/types/api";
 
-/**
- * Thin fetch wrapper for the `/api/v1/*` REST API, used by TanStack Query
- * hooks throughout the frontend. Parses the standard success/error
- * envelope (types/api.ts) once, here, instead of every hook re-deriving
- * it.
- *
- * (features/offline/services/sync-engine.ts has its own small internal
- * copy of this same logic — that file is already built and tested from
- * Stage 09; duplicating a few lines here rather than refactoring it to
- * share this client keeps that stage's tested code untouched.)
- */
+/** Shared REST client for the `/api/v1/*` API. */
 export class ApiRequestError extends Error {
   constructor(
     message: string,
@@ -24,6 +14,11 @@ export class ApiRequestError extends Error {
 
 export async function apiFetch<TData>(path: string, init?: RequestInit): Promise<TData> {
   const response = await fetch(path, { credentials: "include", ...init });
+
+  if (response.status === 204) {
+    return undefined as TData;
+  }
+
   const body: ApiResult<TData> = await response.json();
 
   if (!response.ok || !body.success) {

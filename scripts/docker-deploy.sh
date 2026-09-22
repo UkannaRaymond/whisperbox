@@ -23,7 +23,7 @@ echo "==> Running database migrations"
 docker compose run --rm migrate
 
 echo "==> Starting app"
-docker compose up -d app
+docker compose up -d app socket
 
 echo "==> Deployed. Tailing logs (Ctrl+C to stop watching, app keeps running):"
-docker compose logs -f app
+docker compose logs -f app socket

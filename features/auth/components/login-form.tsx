@@ -4,13 +4,13 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { loginFormSchema, type LoginFormValues } from "../schemas/auth-form.schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
   Form,
   FormControl,
@@ -19,6 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { FormError } from "./form-error";
+import { PasswordInput } from "@/components/ui/password-input";
 
 /**
  * Login form (10-FRONTEND.md § Core Screens: "Login").
@@ -61,14 +63,7 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <motion.form
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-5"
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
         <FormField
           control={form.control}
           name="email"
@@ -76,7 +71,13 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" autoComplete="email" placeholder="you@example.com" {...field} />
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="h-11"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,24 +91,20 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
+                <PasswordInput autoComplete="current-password" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {serverError && (
-          <p role="alert" className="text-destructive text-sm font-medium">
-            {serverError}
-          </p>
-        )}
+        {serverError && <FormError>{serverError}</FormError>}
 
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+        <Button type="submit" size="lg" disabled={form.formState.isSubmitting} className="w-full">
           {form.formState.isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
           Sign in
         </Button>
-      </motion.form>
+      </form>
     </Form>
   );
 }

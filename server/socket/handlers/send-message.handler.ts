@@ -53,17 +53,6 @@ export function registerSendMessageHandler(io: AppServer, socket: AppSocket): vo
         message: toSocketPayload(message, message.encryptedKeyForMe),
       });
 
-      // Fan out to every OTHER recipient individually, each with THEIR
-      // OWN wrapped copy of the message key — never a single shared
-      // broadcast payload. Every recipient's copy of the AES content key
-      // is wrapped against their own public key
-      // (features/chat/utils/resolve-recipient-keys.ts), so there is no
-      // single `encryptedKeyForMe` value that would be correct for more
-      // than one recipient. This used to be a single
-      // `socket.to(conversationRoom(...)).emit(...)` broadcast with no
-      // per-recipient key field at all — which is exactly why every chat
-      // bubble rendered "Encrypted message" forever: there was no key in
-      // the payload for a client to unwrap with, on either transport.
       const { recipientIds, onlineRecipientIds } = await initializeReceiptsForMessage(
         message.conversationId,
         message.id,

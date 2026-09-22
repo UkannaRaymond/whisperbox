@@ -5,7 +5,7 @@ const isProduction = process.env.NODE_ENV === "production";
 /**
  * Application-wide structured logger.
  *
- * Per the TRD, logs must never contain passwords, private keys, plaintext
+ * logs must never contain passwords, private keys, plaintext
  * message bodies, or auth tokens. `redact` strips these paths defensively
  * even if a caller accidentally passes them in.
  */

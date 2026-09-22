@@ -9,8 +9,8 @@ export interface CreateContactInput {
 }
 
 export interface UpdateContactInput {
-  nickname?: string;
-  notes?: string;
+  nickname?: string | null;
+  notes?: string | null;
   favorite?: boolean;
   pinned?: boolean;
 }

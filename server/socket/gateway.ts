@@ -35,10 +35,6 @@ export async function createSocketGateway(httpServer: HttpServer): Promise<AppSe
     },
   });
 
-  // Dedicated pub/sub connections for the adapter — NOT the shared
-  // getRedisClient() singleton used elsewhere. Once a connection issues
-  // SUBSCRIBE it can no longer be used for ordinary commands, so the
-  // adapter needs its own pair rather than sharing the app-wide client.
   const pubClient = new Redis(process.env.REDIS_URL ?? "");
   const subClient = pubClient.duplicate();
   io.adapter(createAdapter(pubClient, subClient));
@@ -66,15 +62,6 @@ async function handleConnection(io: AppServer, socket: AppSocket): Promise<void>
 
     const isFirstConnection = await registerConnection(userId);
     if (isFirstConnection) {
-      // Broadcast first, persist second. `syncPresenceToDatabase` is a
-      // full DB write (Prisma) that exists purely to keep REST reads
-      // consistent with real-time state — nothing about the live
-      // broadcast needs to wait on it. Previously this was `await`ed
-      // BEFORE the emit, so every already-connected client had to wait
-      // out that DB round-trip before hearing someone came online, while
-      // a fresh page load (reading the already-settled Redis state via
-      // the `authenticated` snapshot below) saw it immediately — the
-      // exact "only on refresh does it appear immediately" symptom.
       io.to(conversationIds.map(conversationRoom)).emit("user_online", {
         userId,
         lastSeenAt: new Date().toISOString(),

@@ -1,110 +1,141 @@
 import Link from "next/link";
-import { ArrowRight, KeyRound, LockKeyhole, Radio } from "lucide-react";
+import { CloudOff, FileLock2, KeyRound, Lock } from "lucide-react";
 
+import { HeroChatDemo } from "@/components/landing/hero-chat-demo";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/shared/logo";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+
+const FEATURES = [
+  {
+    icon: KeyRound,
+    title: "Locked before it leaves your device",
+    body: "Each message is encrypted with keys that stay on your devices. The server only ever handles scrambled data.",
+  },
+  {
+    icon: CloudOff,
+    title: "Keeps working offline",
+    body: "Write without a connection. Your messages wait in a queue and send the moment you're back online.",
+  },
+  {
+    icon: FileLock2,
+    title: "Files are private too",
+    body: "Photos and documents up to 500 MB are encrypted the same way as your messages.",
+  },
+] as const;
 
 export default function LandingPage() {
   return (
-    <main className="noise bg-background relative flex min-h-screen flex-col overflow-hidden">
-      {/* Background grid */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] mask-[linear-gradient(to_bottom,black_0%,transparent_90%)] bg-size-[24px_24px]"
-      />
+    <div className="flex min-h-screen flex-col">
+      <main className="flex flex-1 flex-col">
+        {/* Hero: the product's own wallpaper, with the product on it. */}
+        <section className="chat-wallpaper">
+          <header className="relative z-10 mx-auto flex h-18 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
+            <Link href="/" className="rounded-md" aria-label="WhisperBox home">
+              <Logo />
+            </Link>
+            <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
+              <ThemeToggle className="mr-1 sm:mr-2" />
+              <Button asChild variant="ghost" size="sm" className="text-sm">
+                <Link href="/login">Sign in</Link>
+              </Button>
+              <Button asChild size="sm" className="text-sm">
+                <Link href="/register">Get started</Link>
+              </Button>
+            </nav>
+          </header>
 
-      {/* Header */}
-      <header className="border-border/60 relative z-10 flex h-18 shrink-0 items-center justify-between border-b px-6 md:px-10">
-        <Link
-          href="/"
-          className="text-foreground font-mono text-[17px] font-semibold tracking-[-0.04em]"
-        >
-          whisperbox<span className="text-primary">.</span>
-        </Link>
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 pt-10 pb-20 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-16 lg:pb-28">
+            <div className="relative z-10">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/55 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-md">
+                <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                Private by design
+              </div>
+              <h1 className="max-w-xl text-[42px] leading-[1.02] font-bold tracking-[-0.045em] text-balance sm:text-[56px] lg:text-[64px]">
+                Messaging that stays between you and them
+              </h1>
+              <p className="text-muted-foreground mt-6 max-w-lg text-lg leading-8 text-pretty">
+                WhisperBox encrypts every message on your device before it&apos;s sent. Not even our
+                servers can read what you write.
+              </p>
 
-        <Link
-          href="/login"
-          className="text-muted-foreground hover:text-foreground font-mono text-[11px] tracking-tight transition-colors"
-        >
-          sign in <span aria-hidden="true">↗</span>
-        </Link>
-      </header>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg" className="h-12 px-7 text-base">
+                  <Link href="/register">Create your account</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="bg-background/70 h-12 px-7 text-base"
+                >
+                  <Link href="/login">I already have one</Link>
+                </Button>
+              </div>
+              <p className="text-muted-foreground mt-4 text-sm">
+                All you need is an email address.
+              </p>
+            </div>
 
-      {/* Hero */}
-      <section className="relative z-10 flex w-full flex-1 flex-col justify-center px-6 pt-20 pb-24 md:px-10 md:pt-24 md:pb-28 lg:pr-10 lg:pl-[15%]">
-        <div className="max-w-162.5">
-          {/* Eyebrow */}
-          <div className="text-primary mb-8 flex items-center gap-2 font-mono text-[10px] font-medium tracking-[0.2em] uppercase">
-            <span className="bg-success pulse-soft size-1.5 rounded-full" />
-            private by default
+            <div className="relative z-10 lg:translate-y-2">
+              <div className="absolute -inset-5 -z-10 rounded-[2rem] bg-primary/10 blur-2xl" aria-hidden="true" />
+              <HeroChatDemo />
+            </div>
           </div>
+        </section>
 
-          {/* Heading */}
-          <h1 className="text-foreground max-w-170 text-[54px] leading-[0.98] font-semibold tracking-[-0.055em] sm:text-[68px] md:text-[76px]">
-            A quieter place
-            <br />
-            <span className="text-muted-foreground">to talk.</span>
-          </h1>
+        {/* Why it's private */}
+        <section className="bg-background">
+          <div className="mx-auto w-full max-w-6xl px-5 py-20 sm:px-8 lg:py-24">
+            <h2 className="max-w-2xl text-[30px] leading-[1.1] font-bold tracking-[-0.035em] text-balance sm:text-[38px]">
+              Privacy that doesn&apos;t depend on trusting us
+            </h2>
 
-          {/* Description */}
-          <p className="text-muted-foreground mt-8 max-w-125 text-[15px] leading-[1.7] tracking-[-0.01em] sm:text-base lg:-ml-2">
-            whisperbox keeps your conversations close. Messages are encrypted on your device before
-            they travel anywhere.
-          </p>
+            <ul className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+              {FEATURES.map(({ icon: Icon, title, body }) => (
+                <li key={title}>
+                  <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
+                    <Icon className="size-6" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-5 text-lg font-semibold tracking-[-0.01em]">{title}</h3>
+                  <p className="text-muted-foreground mt-2 max-w-sm text-base leading-7">{body}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-          {/* Actions */}
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+        {/* Closing call to action */}
+        <section className="bg-brand-deep text-brand-deep-foreground">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-8 px-5 py-16 sm:px-8 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-[30px] leading-[1.1] font-bold tracking-[-0.035em] sm:text-[36px]">
+                Start a private conversation
+              </h2>
+              <p className="mt-3 max-w-md text-base leading-7 text-white/80">
+                Create an account, set a passphrase for this device, and invite someone you trust.
+              </p>
+            </div>
             <Button
               asChild
               size="lg"
-              className="h-11 rounded-xl px-6 text-sm font-medium shadow-none"
+              className="h-12 shrink-0 bg-white px-7 text-base text-[#06503f] hover:bg-white/90"
             >
-              <Link href="/register">
-                Create your account
-                <ArrowRight className="ml-1 size-4" aria-hidden="true" />
-              </Link>
-            </Button>
-
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-border/80 hover:bg-muted/30 h-11 rounded-xl bg-transparent px-6 text-sm font-medium shadow-none"
-            >
-              <Link href="/login">I already have one</Link>
+              <Link href="/register">Create your account</Link>
             </Button>
           </div>
+        </section>
+      </main>
+
+      <footer className="bg-background border-t">
+        <div className="text-muted-foreground mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-2 px-5 py-6 text-sm sm:flex-row sm:items-center sm:px-8">
+          <span className="flex items-center gap-1.5">
+            <Lock className="size-3.5" aria-hidden="true" />
+            Your messages are end-to-end encrypted
+          </span>
+          <span>© {new Date().getFullYear()} WhisperBox</span>
         </div>
-
-        {/* Values */}
-        <div className="border-border/60 mt-24 grid max-w-162.5 grid-cols-1 gap-6 border-t pt-6 sm:grid-cols-3 sm:gap-4">
-          <Value icon={<LockKeyhole />} label="encrypted" detail="on your device" />
-
-          <Value icon={<KeyRound />} label="zero knowledge" detail="by design" />
-
-          <Value icon={<Radio />} label="real time" detail="when connected" />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-border/60 text-muted-foreground relative z-10 flex shrink-0 items-center justify-between border-t px-6 py-5 font-mono text-[9px] tracking-[0.04em] md:px-10">
-        <span>whisperbox / private conversations</span>
-
-        <span className="hidden sm:block">nothing readable leaves your device</span>
       </footer>
-    </main>
-  );
-}
-
-function Value({ icon, label, detail }: { icon: React.ReactNode; label: string; detail: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-primary flex size-8 items-center justify-center">{icon}</span>
-
-      <span className="font-mono text-[10px] leading-4">
-        <span className="text-foreground block">{label}</span>
-
-        <span className="text-muted-foreground block">{detail}</span>
-      </span>
     </div>
   );
 }

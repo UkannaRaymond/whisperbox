@@ -4,27 +4,9 @@ import {
   STORE_IDENTITY,
   STORE_DEVICE_KEYS,
   STORE_SESSION_METADATA,
-  IDENTITY_RECORD_ID,
+  LEGACY_UNSCOPED_IDENTITY_RECORD_ID,
 } from "../constants/crypto.constants";
 import type { StoredIdentityRecord, RemoteDeviceKey } from "../types/crypto.types";
-
-/**
- * IndexedDB-backed secure storage (07-CRYPTOGRAPHY.md § Client Storage:
- * "IndexedDB — Encrypted private key, Device keys, Session metadata").
- *
- * This is a thin, dependency-free wrapper around the native IndexedDB API
- * — no `idb`/`dexie` package was added, since raw IndexedDB is entirely
- * sufficient for three small stores and this avoids pulling in a new
- * dependency for something this bounded.
- *
- * "Secure" here means: the *private key itself* is never stored in plain
- * form (see StoredIdentityRecord — only `encryptedPrivateKey` +
- * `privateKeyNonce` + KDF params are persisted, never a raw exportable
- * private key). IndexedDB itself has no additional OS-level encryption or
- * access control beyond same-origin policy — it is still readable by any
- * script running on this origin (e.g. a successful XSS), which is exactly
- * why the private key is encrypted before it ever reaches this module.
- */
 
 function assertBrowserEnvironment(): void {
   if (typeof indexedDB === "undefined") {
@@ -83,18 +65,50 @@ async function withStore<T>(
   return runRequest(fn(store));
 }
 
-// --- Identity keypair (this device's own encrypted private key) ----------
-
 export async function saveIdentityRecord(record: StoredIdentityRecord): Promise<void> {
   await withStore(STORE_IDENTITY, "readwrite", (store) => store.put(record));
 }
 
-export async function getIdentityRecord(): Promise<StoredIdentityRecord | undefined> {
-  return withStore(STORE_IDENTITY, "readonly", (store) => store.get(IDENTITY_RECORD_ID));
+export async function getIdentityRecord(
+  recordId: string,
+): Promise<StoredIdentityRecord | undefined> {
+  return withStore(STORE_IDENTITY, "readonly", (store) => store.get(recordId));
 }
 
-export async function deleteIdentityRecord(): Promise<void> {
-  await withStore(STORE_IDENTITY, "readwrite", (store) => store.delete(IDENTITY_RECORD_ID));
+export async function deleteIdentityRecord(recordId: string): Promise<void> {
+  await withStore(STORE_IDENTITY, "readwrite", (store) => store.delete(recordId));
+}
+
+/**
+ * One-time migration for identities created before per-account scoping
+ * existed: if this device still has an identity sitting under the OLD
+ * fixed, unscoped row (`LEGACY_UNSCOPED_IDENTITY_RECORD_ID`), moves it to
+ * `newRecordId` (the caller's scoped id) and removes the legacy row, so
+ * the account that already unlocked it once doesn't get treated as
+ * first-time and orphaned from its real identity.
+ *
+ * Best-effort and intentionally narrow: it only runs when a scoped
+ * lookup already came back empty (see key-manager.service.ts's
+ * `getOwnIdentityRecord`), and it only ever moves a record — it never
+ * invents one. On a device where the legacy row belonged to a DIFFERENT
+ * account than the one now checking, this hands that account someone
+ * else's identity record; that's an accepted, unavoidable consequence of
+ * the old design never having recorded which account a legacy identity
+ * belonged to, and only matters for a device that (a) predates this fix
+ * and (b) had more than one account use it — the same multi-account
+ * collision this fix exists to prevent going forward, just for one
+ * unavoidable last migration instead of forever.
+ */
+export async function migrateLegacyIdentityRecord(
+  newRecordId: string,
+): Promise<StoredIdentityRecord | undefined> {
+  const legacy = await getIdentityRecord(LEGACY_UNSCOPED_IDENTITY_RECORD_ID);
+  if (!legacy) return undefined;
+
+  const migrated: StoredIdentityRecord = { ...legacy, id: newRecordId };
+  await saveIdentityRecord(migrated);
+  await deleteIdentityRecord(LEGACY_UNSCOPED_IDENTITY_RECORD_ID);
+  return migrated;
 }
 
 // --- Remote device/contact public keys ------------------------------------

@@ -45,10 +45,35 @@ export const createAttachmentSchema = z.object({
 });
 export type CreateAttachmentDto = z.infer<typeof createAttachmentSchema>;
 
+export const listAttachmentsQuerySchema = z.object({
+  messageId: z.string().uuid(),
+});
+export type ListAttachmentsQueryDto = z.infer<typeof listAttachmentsQuerySchema>;
+
 export const attachmentParamsSchema = z.object({
   id: z.string().uuid("Invalid attachment id"),
 });
 export type AttachmentParamsDto = z.infer<typeof attachmentParamsSchema>;
+
+/**
+ * POST /v1/attachments/upload-url — the first step of the upload flow: the
+ * client encrypts the file locally, then asks for a presigned R2 PUT URL
+ * to upload the ciphertext bytes directly (server/storage/client.ts),
+ * before ever calling `createAttachmentSchema` to register the metadata.
+ */
+export const requestUploadUrlSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(127),
+  extension: z.string().max(16).optional(),
+});
+export type RequestUploadUrlDto = z.infer<typeof requestUploadUrlSchema>;
+
+export const uploadUrlResponseSchema = z.object({
+  storageKey: z.string(),
+  uploadUrl: z.string(),
+  expiresInSeconds: z.number(),
+});
+export type UploadUrlResponseDto = z.infer<typeof uploadUrlResponseSchema>;
 
 export const attachmentResponseSchema = z.object({
   id: z.string().uuid(),
@@ -75,3 +100,8 @@ export const attachmentResponseSchema = z.object({
   uploadedAt: z.string().datetime(),
 });
 export type AttachmentResponseDto = z.infer<typeof attachmentResponseSchema>;
+
+export const downloadUrlResponseSchema = attachmentResponseSchema.extend({
+  downloadUrl: z.string(),
+});
+export type DownloadUrlResponseDto = z.infer<typeof downloadUrlResponseSchema>;

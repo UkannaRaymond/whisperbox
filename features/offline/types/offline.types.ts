@@ -23,7 +23,7 @@ export type LocalMessage = MessageResponseDto;
 /** Attachment metadata only — the encrypted blob itself lives in the separate attachment-blob cache (features/offline/services/attachment-cache.ts), keyed the same way. */
 export type LocalAttachmentMeta = AttachmentResponseDto;
 
-// --- Offline queue (09-OFFLINE-SYNC.md § Queue States) --------------------
+// --- Offline queue --------------------
 
 export type QueueItemState = "PENDING" | "UPLOADING" | "DELIVERED" | "FAILED" | "RETRYING";
 

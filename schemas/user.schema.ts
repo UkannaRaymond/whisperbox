@@ -11,15 +11,6 @@ export const updateMeSchema = z
   });
 export type UpdateMeDto = z.infer<typeof updateMeSchema>;
 
-// `id` is not validated as `.uuid()`: Better Auth's default ID generator
-// does not produce RFC 4122 UUIDs. `username`/`status`/`lastSeenAt` come
-// from the related `UserProfile` row, which may not exist yet for a user
-// who has an auth account but hasn't completed WhisperBox profile setup —
-// hence `username` is nullable here (previously modeled as always present,
-// which doesn't hold once `User` and `UserProfile` are separate rows).
-// `status` matches the actual `UserStatus` enum in prisma/schema.prisma
-// (ONLINE/AWAY/BUSY/INVISIBLE/OFFLINE) — the old three-value ONLINE/
-// OFFLINE/AWAY set was for a `PresenceStatus` enum that no longer exists.
 export const lookupUserQuerySchema = z.object({
   handle: z.string().min(1, "handle is required"),
 });

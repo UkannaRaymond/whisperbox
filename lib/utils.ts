@@ -1,105 +1,70 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * Merge Tailwind class names, resolving conflicting utility classes
- * (e.g. `px-2` vs `px-4`) in favor of the last one supplied.
- */
-export function cn(...inputs: ClassValue[]): string {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const DEVICE_IDENTIFIER_STORAGE_KEY = "whisperbox:device-identifier";
+const avatarColors = [
+  "bg-[#dbeafe] text-[#1d4ed8]",
+  "bg-[#dcfce7] text-[#15803d]",
+  "bg-[#fef3c7] text-[#a16207]",
+  "bg-[#fce7f3] text-[#be185d]",
+  "bg-[#ede9fe] text-[#6d28d9]",
+  "bg-[#cffafe] text-[#0e7490]",
+];
 
-/**
- * A stable id for *this browser install*, persisted in localStorage (not
- * secure storage — it's not a secret, just a way to tell "the same
- * physical device logging in again" apart from "a brand new device"). Used
- * by `POST /v1/devices` (features/auth/store/identity-store.ts) so
- * re-registering the same device's key on every login updates one row via
- * `findOrCreate` instead of piling up a new `Device` row each time.
- */
-export function getOrCreateDeviceIdentifier(): string {
-  if (typeof window === "undefined") return "server";
+export function initialsFor(value?: string | null) {
+  const words = (value ?? "?").trim().split(/\\s+/).filter(Boolean);
+  if (!words.length) return "?";
 
-  const existing = window.localStorage.getItem(DEVICE_IDENTIFIER_STORAGE_KEY);
-  if (existing) return existing;
-
-  const generated = crypto.randomUUID();
-  window.localStorage.setItem(DEVICE_IDENTIFIER_STORAGE_KEY, generated);
-  return generated;
+  return words.length === 1
+    ? (words[0]?.slice(0, 2) ?? "?").toUpperCase()
+    : `${words[0]?.[0] ?? ""}${words.at(-1)?.[0] ?? ""}`.toUpperCase();
 }
 
-/** Best-effort platform guess for `Device.platform`, from the UA string. Falls back to WEB. */
-export function detectDevicePlatform(): "WINDOWS" | "MACOS" | "LINUX" | "ANDROID" | "IOS" | "WEB" {
+export function avatarColorFor(value?: string | null) {
+  const input = value ?? "";
+  const hash = [...input].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return avatarColors[hash % avatarColors.length];
+}
+
+export function formatConversationTimestamp(value?: string | number | Date | null) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  return sameDay
+    ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date)
+    : new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
+}
+
+export type DevicePlatform = "WINDOWS" | "MACOS" | "LINUX" | "ANDROID" | "IOS" | "WEB";
+
+export function detectDevicePlatform(): DevicePlatform {
   if (typeof navigator === "undefined") return "WEB";
 
-  const ua = navigator.userAgent;
-  if (/android/i.test(ua)) return "ANDROID";
-  if (/iphone|ipad|ipod/i.test(ua)) return "IOS";
-  if (/mac/i.test(ua)) return "MACOS";
-  if (/win/i.test(ua)) return "WINDOWS";
-  if (/linux/i.test(ua)) return "LINUX";
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform ?? "";
+
+  if (/Android/i.test(userAgent)) return "ANDROID";
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "IOS";
+  if (/Win/i.test(platform)) return "WINDOWS";
+  if (/Mac/i.test(platform)) return "MACOS";
+  if (/Linux/i.test(platform)) return "LINUX";
   return "WEB";
 }
 
-/**
- * A fixed palette of avatar background colors, each picked to read
- * clearly against the dark "sealed correspondence" surface
- * (app/globals.css) at both the icon-rail and list-item sizes this is
- * used at. Deliberately not the `--primary` violet for every avatar —
- * that's reserved for the app's own accent (active states, the compose
- * button, sent-message bubbles); contact avatars get their own varied
- * identity so the eye can tell people apart at a glance in a long list,
- * the same way a real contacts app assigns each person a stable color.
- */
-const AVATAR_PALETTE = [
-  "#2dd4bf", // teal
-  "#f472b6", // pink
-  "#a78bfa", // violet
-  "#4ade80", // green
-  "#fb923c", // orange
-  "#60a5fa", // blue
-  "#facc15", // yellow
-  "#fb7185", // rose
-] as const;
-
-/** Deterministic per-id avatar color — the same user/conversation always gets the same color, without a color column anywhere in the schema. */
-export function avatarColorFor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  }
-  const index = Math.abs(hash) % AVATAR_PALETTE.length;
-  return AVATAR_PALETTE[index]!;
-}
-
-/** Initials for an avatar fallback — "Jordan Hayes" -> "JH", "product-team" -> "P". Mirrors how real chat apps derive initials from a display name, not just the first letter. */
-export function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0]!.slice(0, 1).toUpperCase();
-  return (parts[0]!.slice(0, 1) + parts[parts.length - 1]!.slice(0, 1)).toUpperCase();
-}
-
-/**
- * Conversation-list-style relative timestamp: clock time for today
- * ("10:42"), weekday abbreviation for the last 7 days ("Tue"), and a
- * short date beyond that — the same three-tier scheme most chat apps
- * use so a list of dozens of conversations stays scannable instead of
- * showing a full timestamp on every row.
- */
-export function formatConversationTimestamp(iso: string): string {
-  const date = new Date(iso);
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysAgo = Math.floor((startOfToday.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (daysAgo <= 0) {
-    return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  }
-  if (daysAgo < 7) {
-    return date.toLocaleDateString(undefined, { weekday: "short" });
-  }
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+export function getOrCreateDeviceIdentifier() {
+  const key = "whisperbox-device-id";
+  if (typeof window === "undefined") return "server-device";
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const identifier =
+    typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  window.localStorage.setItem(key, identifier);
+  return identifier;
 }

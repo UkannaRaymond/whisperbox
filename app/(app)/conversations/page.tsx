@@ -1,54 +1,44 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Plus, ShieldCheck, Zap, Lock } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 
+import { LogoMark } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { NewConversationDialog } from "@/features/chat/components/new-conversation-dialog";
 
 /**
  * Default state of the Conversation List screen when no
- * conversation is selected yet — the sidebar (always visible on desktop,
- * a Sheet drawer on mobile) is where the actual list lives; see
- * features/chat/components/app-sidebar.tsx.
+ * conversation is selected yet — on desktop this fills the space next to the
+ * chat list; on phones the list itself is the screen, so this is never shown
+ * (see app/(app)/layout.tsx).
  */
 export default function ConversationsIndexPage() {
   const [isNewConversationOpen, setIsNewConversationOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
-      <div className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-2xl">
-        <MessageCircle className="size-8" aria-hidden="true" />
-      </div>
+    <div className="bg-panel border-primary relative flex flex-1 flex-col items-center justify-center gap-6 border-b-[6px] px-8 text-center">
+      <LogoMark className="size-20" />
 
-      <div className="space-y-1.5">
-        <h1 className="text-xl font-semibold">Welcome to WhisperBox</h1>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Select a conversation from the list to start messaging, or create a new one.
+      <div className="space-y-2">
+        <h1 className="text-[28px] font-bold tracking-[-0.03em]">WhisperBox on the web</h1>
+        <p className="text-muted-foreground mx-auto max-w-sm text-[15px] leading-6">
+          Pick a chat from the list to read it, or start a new one. Everything you send is
+          encrypted on this device first.
         </p>
       </div>
 
-      <Button onClick={() => setIsNewConversationOpen(true)} className="gap-2">
-        <Plus className="size-4" aria-hidden="true" />
-        Start a new conversation
+      <Button size="lg" onClick={() => setIsNewConversationOpen(true)}>
+        <Plus aria-hidden="true" />
+        New chat
       </Button>
 
       <NewConversationDialog open={isNewConversationOpen} onOpenChange={setIsNewConversationOpen} />
 
-      <ul className="text-muted-foreground mt-2 flex flex-col gap-1.5 text-xs">
-        <li className="flex items-center gap-1.5">
-          <Lock className="size-3.5" aria-hidden="true" />
-          End-to-end encrypted
-        </li>
-        <li className="flex items-center gap-1.5">
-          <Zap className="size-3.5" aria-hidden="true" />
-          Real-time delivery
-        </li>
-        <li className="flex items-center gap-1.5">
-          <ShieldCheck className="size-3.5" aria-hidden="true" />
-          Zero-knowledge architecture
-        </li>
-      </ul>
+      <p className="text-muted-foreground absolute bottom-10 flex items-center gap-1.5 text-[13px]">
+        <Lock className="size-3.5" aria-hidden="true" />
+        Your messages are end-to-end encrypted
+      </p>
     </div>
   );
 }

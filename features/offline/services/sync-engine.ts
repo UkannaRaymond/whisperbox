@@ -9,64 +9,14 @@ import type {
   LocalSetting,
   TimelineEntry,
 } from "../types/offline.types";
+import { apiFetch, ApiRequestError } from "@/lib/api-client";
 
-/**
- * Sync engine (09-OFFLINE-SYNC.md § Deliverables: "Sync service"; §
- * responsibilities: "Push pending messages", "Pull new messages",
- * "Resolve conflicts", "Retry failed uploads", "Remove completed jobs").
- *
- * Talks to the REST API only (`/api/v1/conversations`, `/api/v1/messages`)
- * — not the Socket.IO gateway. That's a deliberate boundary, not an
- * oversight: this feature's whole job is working when real-time delivery
- * *isn't* available, so it shouldn't depend on the socket connection's
- * state at all. It's also why "Do not modify... websocket implementation"
- * is satisfied by construction rather than by carefully avoiding a handful
- * of files — there was never a reason to touch them. (Messages composed
- * while online and successfully sent live-round-trip through the socket
- * gateway as normal; this engine only ever handles messages that were
- * queued because that path wasn't available at compose time, or on the
- * periodic/pull side, pure REST reads.)
- */
+export { ApiRequestError as SyncApiError };
 
-interface ApiEnvelope<T> {
-  success: boolean;
-  data?: T;
-  error?: { code: string; message: string };
-}
-
-/** Thrown by `apiFetch` — carries the HTTP status so callers can branch on it (e.g. 403 vs any other failure). */
-export class SyncApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "SyncApiError";
-  }
-}
-
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, { credentials: "include", ...init });
-  const body: ApiEnvelope<T> = await response.json();
-
-  if (!response.ok || !body.success || body.data === undefined) {
-    throw new SyncApiError(
-      body.error?.message ?? `Request to ${path} failed (${response.status})`,
-      response.status,
-    );
-  }
-
-  return body.data;
-}
+/** Coordinates REST-based offline pulls, queued message delivery, and retry scheduling. */
 
 // --- Pull: conversations -----------------------------------------------
 
-/**
- * Refreshes the local conversation list. Conflict rule: "server timestamp
- * for conversation metadata" (09-OFFLINE-SYNC.md) — the server's copy
- * always overwrites the local one outright; there's no local-wins case to
- * reconcile, unlike profile/settings below.
- */
 export async function pullConversations(): Promise<LocalConversation[]> {
   const all: LocalConversation[] = [];
   let cursor: string | undefined;
@@ -86,26 +36,25 @@ export async function pullConversations(): Promise<LocalConversation[]> {
 
 // --- Pull: messages -------------------------------------------------------
 
-/**
- * Pulls messages newer than this device's last-synced cursor for one
- * conversation.
- *
- * `GET /v1/conversations/{id}/messages` returns newest-first and only
- * supports cursoring *backward* through history (there's no `since`/
- * `after` parameter) — so "pull only what's new" is implemented as
- * "page backward from the newest message until we reach the last message
- * this device already has," rather than assuming a forward/incremental
- * API exists. For a first-ever sync (no stored cursor), this naturally
- * pages through the conversation's entire history instead.
- *
- * Known limitation: this endpoint filters out messages with `deleted:
- * true` entirely rather than including them as tombstones, so a message
- * deleted server-side after this device's last sync will just silently
- * stop appearing in future pulls — there's no signal for the local cache
- * to know to remove its own copy. Fixing that needs a tombstone/deletion-
- * feed mechanism on the server side, which doesn't exist yet; out of
- * scope for this stage's client-side deliverables.
- */
+const MESSAGE_STATUS_RANK = {
+  SENDING: 0,
+  SENT: 1,
+  DELIVERED: 2,
+  READ: 3,
+  FAILED: -1,
+} as const;
+
+async function mergePulledMessage(message: LocalMessage): Promise<LocalMessage> {
+  const existing = await OfflineDb.getMessage(message.id);
+  if (!existing) return message;
+
+  const existingRank = MESSAGE_STATUS_RANK[existing.status];
+  const remoteRank = MESSAGE_STATUS_RANK[message.status];
+  return existingRank > remoteRank
+    ? { ...message, status: existing.status, updatedAt: existing.updatedAt }
+    : message;
+}
+
 export async function pullNewMessages(conversationId: string): Promise<LocalMessage[]> {
   const cursorRecord = await OfflineDb.getSyncCursor(conversationId);
   const knownLastMessageId = cursorRecord?.lastMessageId ?? null;
@@ -135,7 +84,8 @@ export async function pullNewMessages(conversationId: string): Promise<LocalMess
   }
 
   if (collected.length > 0) {
-    await OfflineDb.putMessages(collected);
+    const merged = await Promise.all(collected.map(mergePulledMessage));
+    await OfflineDb.putMessages(merged);
   }
   if (newestSeenId) {
     await OfflineDb.putSyncCursor({
@@ -166,7 +116,7 @@ export async function pullNewMessagesForAllConversations(): Promise<void> {
       // — before this fix — aborted the ENTIRE pass, so no other
       // conversation's messages synced either. Prune it locally and
       // move on to the rest.
-      if (err instanceof SyncApiError && err.status === 403) {
+      if (err instanceof ApiRequestError && err.status === 403) {
         console.warn(
           `Removing local conversation ${conversation.id}: server says this device is no longer a member.`,
         );
@@ -243,15 +193,7 @@ async function attemptDelivery(operationId: string): Promise<void> {
 
 // --- Conflict resolution: settings / profile-style data --------------
 
-/**
- * Last-write-wins by `updatedAt` (09-OFFLINE-SYNC.md: "Last-write-wins for
- * profile updates") — a pure, independently-testable merge function.
- * There is currently no server-side settings-sync endpoint for this to be
- * wired up against (only `PATCH /v1/users/me`, which is a different,
- * single-device-at-a-time flow); this implements the *policy* correctly
- * and is ready to be called once that sync pipeline exists, rather than
- * leaving the conflict rule unimplemented until then.
- */
+/** Resolves two local setting versions using last-write-wins by `updatedAt`. */
 export function resolveSettingConflict<T>(
   local: LocalSetting<T>,
   remote: LocalSetting<T>,

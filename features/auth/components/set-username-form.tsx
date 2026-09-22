@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
@@ -20,6 +19,7 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
+import { FormError } from "./form-error";
 
 /**
  * Username step, shown right after sign-up (`/onboarding/username`,
@@ -62,23 +62,31 @@ export function SetUsernameForm() {
 
   return (
     <Form {...form}>
-      <motion.form
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-5"
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
         <FormField
           control={form.control}
           name="username"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input autoComplete="username" placeholder="ada_lovelace" {...field} />
-              </FormControl>
+              <div className="relative">
+                <span
+                  aria-hidden="true"
+                  className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-base md:text-sm"
+                >
+                  @
+                </span>
+                <FormControl>
+                  <Input
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    placeholder="ada_lovelace"
+                    className="h-11 pl-8"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
               <FormDescription>
                 Lowercase letters, numbers, and underscores only. This is how people find you.
               </FormDescription>
@@ -87,17 +95,18 @@ export function SetUsernameForm() {
           )}
         />
 
-        {serverError && (
-          <p role="alert" className="text-destructive text-sm font-medium">
-            {serverError}
-          </p>
-        )}
+        {serverError && <FormError>{serverError}</FormError>}
 
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={form.formState.isSubmitting}
+          className="w-full"
+        >
           {form.formState.isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
           Continue
         </Button>
-      </motion.form>
+      </form>
     </Form>
   );
 }

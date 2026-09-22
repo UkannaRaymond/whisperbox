@@ -10,7 +10,7 @@ import { ConversationList } from "./conversation-list";
 import type { LocalConversation } from "@/features/offline/types/offline.types";
 
 /**
- * The "Messages" panel (search + tabs + list). Uses CSS Grid with rows
+ * The "Chats" panel (title + search + filter chips + list). Uses CSS Grid with rows
  * `[auto, minmax(0,1fr)]` rather than a flex column: a `1fr` GRID track
  * (unlike a flex item) already has an implicit minimum size of 0, so the
  * second row can shrink to fit the available space and hand off
@@ -51,7 +51,7 @@ export function SidebarPanel({
     : undefined;
 
   return (
-    <div className="grid h-full grid-rows-[auto_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
       <SidebarListHeader
         searchInputRef={searchInputRef}
         query={query}

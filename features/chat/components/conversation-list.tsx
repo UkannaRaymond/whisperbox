@@ -28,13 +28,13 @@ export function ConversationList({
 }) {
   if (isLoading) {
     return (
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2" aria-label="Conversations">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-            <Skeleton className="size-10 rounded-full" />
-            <div className="flex-1 space-y-1.5">
+      <nav className="min-h-0 overflow-y-auto" aria-label="Conversations" aria-busy="true">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="flex h-[72px] items-center gap-3 px-3">
+            <Skeleton className="size-12 rounded-full" />
+            <div className="flex-1 space-y-2">
               <Skeleton className="h-3.5 w-2/3" />
-              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="h-3 w-1/2" />
             </div>
           </div>
         ))}
@@ -45,23 +45,16 @@ export function ConversationList({
   const hasResults = pinned.length > 0 || unpinned.length > 0;
 
   return (
-    <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2" aria-label="Conversations">
+    <nav className="min-h-0 overflow-y-auto overscroll-contain" aria-label="Conversations">
       {hasResults ? (
         <>
-          {pinned.length > 0 && (
-            <>
-              <p className="text-muted-foreground flex items-center gap-1 px-3 pt-1 pb-1 text-[11px] font-medium tracking-wide uppercase">
-                Pinned
-              </p>
-              {pinned.map((conversation) => (
-                <ConversationCard
-                  key={conversation.id}
-                  conversation={conversation}
-                  isActive={activeConversationId === conversation.id}
-                />
-              ))}
-            </>
-          )}
+          {pinned.map((conversation) => (
+            <ConversationCard
+              key={conversation.id}
+              conversation={conversation}
+              isActive={activeConversationId === conversation.id}
+            />
+          ))}
           {unpinned.map((conversation) => (
             <ConversationCard
               key={conversation.id}
@@ -71,9 +64,14 @@ export function ConversationList({
           ))}
         </>
       ) : hasAnyConversations ? (
-        <p className="text-muted-foreground p-3 text-sm">No conversations match.</p>
+        <p className="text-muted-foreground px-6 py-10 text-center text-sm">
+          No chats match. Try a different search or filter.
+        </p>
       ) : (
-        <p className="text-muted-foreground p-3 text-sm">No conversations yet.</p>
+        <div className="text-muted-foreground px-6 py-12 text-center text-sm">
+          <p className="text-foreground mb-1 font-medium">No chats yet</p>
+          <p>Use the pen icon above to start your first conversation.</p>
+        </div>
       )}
     </nav>
   );

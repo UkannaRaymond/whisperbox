@@ -4,24 +4,25 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { registerFormSchema, type RegisterFormValues } from "../schemas/auth-form.schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { FormError } from "./form-error";
 
 /**
- *
  * Collects only `name`/`email`/`password` — the fields Better Auth's
  * `authClient.signUp.email` (lib/auth-client.ts) itself accepts. Username
  * used to be collected here too, but that made this one screen do two
@@ -59,14 +60,7 @@ export function RegisterForm() {
 
   return (
     <Form {...form}>
-      <motion.form
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-5"
-        noValidate
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
         <FormField
           control={form.control}
           name="name"
@@ -74,7 +68,7 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input autoComplete="name" placeholder="Ada Lovelace" {...field} />
+                <Input autoComplete="name" placeholder="Ada Lovelace" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,7 +82,13 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" autoComplete="email" placeholder="you@example.com" {...field} />
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="h-11"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -102,8 +102,9 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" className="h-11" {...field} />
               </FormControl>
+              <FormDescription>At least 8 characters.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -116,24 +117,25 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Confirm password</FormLabel>
               <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
+                <PasswordInput autoComplete="new-password" className="h-11" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {serverError && (
-          <p role="alert" className="text-destructive text-sm font-medium">
-            {serverError}
-          </p>
-        )}
+        {serverError && <FormError>{serverError}</FormError>}
 
-        <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={form.formState.isSubmitting}
+          className="w-full"
+        >
           {form.formState.isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
           Create account
         </Button>
-      </motion.form>
+      </form>
     </Form>
   );
 }

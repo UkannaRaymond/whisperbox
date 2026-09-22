@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Figtree, Geist_Mono } from "next/font/google";
 
 import { AppProviders } from "@/providers/app-providers";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
   display: "swap",
 });
 
+// Still used for key fingerprints and the ciphertext demo on the landing page.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -32,9 +33,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Lets the chat screens extend under the notch / home indicator; the app shell
+  // pads itself with env(safe-area-inset-*).
+  viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f9fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d14" },
+    { media: "(prefers-color-scheme: light)", color: "#f0f2f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#1f2c32" },
   ],
 };
 
@@ -46,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${figtree.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">

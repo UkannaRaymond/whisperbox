@@ -1,12 +1,3 @@
-// @vitest-environment node
-//
-// config/env.ts computes `export const env` at module-eval time based on
-// `typeof window === "undefined"` — under vitest's default jsdom
-// environment `window` IS defined, so the server schema would never
-// actually run and this test would silently test nothing. The pragma
-// above forces Node's environment for this file only, matching how the
-// real server processes (Next.js server runtime, the socket gateway)
-// actually load it.
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const REQUIRED_BASE_ENV = {
@@ -21,10 +12,11 @@ const REQUIRED_BASE_ENV = {
 
 const ENV_KEYS = [
   ...Object.keys(REQUIRED_BASE_ENV),
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_ENDPOINT_URL_S3",
+  "AWS_REGION",
   "R2_BUCKET",
-  "R2_ACCESS_KEY",
-  "R2_SECRET_KEY",
-  "R2_ENDPOINT",
   "SENTRY_DSN",
   "NEXT_PUBLIC_SENTRY_DSN",
 ];
@@ -33,13 +25,19 @@ let originalEnv: Record<string, string | undefined>;
 
 beforeEach(() => {
   originalEnv = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));
-  for (const key of ENV_KEYS) delete process.env[key];
+
+  for (const key of ENV_KEYS) {
+    delete process.env[key];
+  }
 });
 
 afterEach(() => {
   for (const key of ENV_KEYS) {
-    if (originalEnv[key] === undefined) delete process.env[key];
-    else process.env[key] = originalEnv[key];
+    if (originalEnv[key] === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = originalEnv[key];
+    }
   }
 });
 
@@ -53,77 +51,99 @@ async function loadEnvWith(overrides: Record<string, string>) {
 describe("config/env.ts — server env validation", () => {
   it("loads successfully with only the required vars set", async () => {
     const { env } = await loadEnvWith({});
+
     expect(env.DATABASE_URL).toBe(REQUIRED_BASE_ENV.DATABASE_URL);
   });
 
-  // Regression test: this exact bug shipped twice — once for the
-  // `.url()`-validated optional fields (SENTRY_DSN, R2_ENDPOINT), then
-  // again for the `.min(1)`-validated ones (R2_BUCKET, R2_ACCESS_KEY,
-  // R2_SECRET_KEY). A `.env` file that declares a var but leaves it
-  // blank (`R2_BUCKET=`) produces `""`, not `undefined` — `.optional()`
-  // alone doesn't protect against that.
-  it("treats a blank R2_BUCKET/R2_ACCESS_KEY/R2_SECRET_KEY/R2_ENDPOINT the same as unset, outside production", async () => {
+  // Regression test: blank optional storage variables should be treated
+  // the same as unset outside production. A `.env` file that declares
+  // `AWS_ACCESS_KEY_ID=` produces an empty string, not `undefined`.
+  it("treats blank storage variables the same as unset, outside production", async () => {
     const { env } = await loadEnvWith({
       R2_BUCKET: "",
-      R2_ACCESS_KEY: "",
-      R2_SECRET_KEY: "",
-      R2_ENDPOINT: "",
+      AWS_ACCESS_KEY_ID: "",
+      AWS_SECRET_ACCESS_KEY: "",
+      AWS_ENDPOINT_URL_S3: "",
+      AWS_REGION: "",
     });
 
     expect(env.R2_BUCKET).toBeUndefined();
-    expect(env.R2_ACCESS_KEY).toBeUndefined();
-    expect(env.R2_SECRET_KEY).toBeUndefined();
-    expect(env.R2_ENDPOINT).toBeUndefined();
+    expect(env.AWS_ACCESS_KEY_ID).toBeUndefined();
+    expect(env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
+    expect(env.AWS_ENDPOINT_URL_S3).toBeUndefined();
+    expect(env.AWS_REGION).toBeUndefined();
   });
 
   it("treats a blank SENTRY_DSN the same as unset", async () => {
-    const { env } = await loadEnvWith({ SENTRY_DSN: "" });
+    const { env } = await loadEnvWith({
+      SENTRY_DSN: "",
+    });
+
     expect(env.SENTRY_DSN).toBeUndefined();
   });
 
-  it("accepts real R2 values when they are provided", async () => {
+  it("accepts real Neon Object Storage values when they are provided", async () => {
     const { env } = await loadEnvWith({
-      R2_BUCKET: "my-bucket",
-      R2_ACCESS_KEY: "access-key",
-      R2_SECRET_KEY: "secret-key",
-      R2_ENDPOINT: "https://abc123.r2.cloudflarestorage.com",
+      R2_BUCKET: "whisperbox-attachments",
+      AWS_ACCESS_KEY_ID: "access-key",
+      AWS_SECRET_ACCESS_KEY: "secret-key",
+      AWS_ENDPOINT_URL_S3: "https://storage.example.com",
+      AWS_REGION: "aws-eu-central-1",
     });
 
-    expect(env.R2_BUCKET).toBe("my-bucket");
-    expect(env.R2_ENDPOINT).toBe("https://abc123.r2.cloudflarestorage.com");
+    expect(env.R2_BUCKET).toBe("whisperbox-attachments");
+    expect(env.AWS_ACCESS_KEY_ID).toBe("access-key");
+    expect(env.AWS_SECRET_ACCESS_KEY).toBe("secret-key");
+    expect(env.AWS_ENDPOINT_URL_S3).toBe("https://storage.example.com");
+    expect(env.AWS_REGION).toBe("aws-eu-central-1");
   });
 
-  it("rejects a syntactically invalid R2_ENDPOINT (e.g. a literal unfilled placeholder)", async () => {
+  it("rejects a syntactically invalid AWS_ENDPOINT_URL_S3", async () => {
     await expect(
-      loadEnvWith({ R2_ENDPOINT: "https://<account-id>.r2.cloudflarestorage.com" }),
-    ).rejects.toThrow(/R2_ENDPOINT/);
+      loadEnvWith({
+        AWS_ENDPOINT_URL_S3: "not-a-valid-url",
+      }),
+    ).rejects.toThrow(/AWS_ENDPOINT_URL_S3/);
   });
 
   it("requires DATABASE_URL", async () => {
-    await expect(loadEnvWith({ DATABASE_URL: "" })).rejects.toThrow(/DATABASE_URL/);
+    await expect(
+      loadEnvWith({
+        DATABASE_URL: "",
+      }),
+    ).rejects.toThrow(/DATABASE_URL/);
   });
 
   it("requires AUTH_SECRET to be at least 32 characters", async () => {
-    await expect(loadEnvWith({ AUTH_SECRET: "too-short" })).rejects.toThrow(/AUTH_SECRET/);
+    await expect(
+      loadEnvWith({
+        AUTH_SECRET: "too-short",
+      }),
+    ).rejects.toThrow(/AUTH_SECRET/);
   });
 
-  // The other half of the fix: R2 is optional in development but must
-  // not be silently missing in a real production deploy.
-  it("requires all four R2 vars once NODE_ENV=production", async () => {
-    await expect(loadEnvWith({ NODE_ENV: "production" })).rejects.toThrow(
-      /R2_BUCKET.*R2_ACCESS_KEY.*R2_SECRET_KEY.*R2_ENDPOINT/s,
+  // Neon Object Storage is optional during development but must not be
+  // silently missing in a real production deployment.
+  it("requires all storage vars once NODE_ENV=production", async () => {
+    await expect(
+      loadEnvWith({
+        NODE_ENV: "production",
+      }),
+    ).rejects.toThrow(
+      /R2_BUCKET.*AWS_ACCESS_KEY_ID.*AWS_SECRET_ACCESS_KEY.*AWS_ENDPOINT_URL_S3.*AWS_REGION/s,
     );
   });
 
-  it("passes in production when all four R2 vars are set", async () => {
+  it("passes in production when all storage vars are set", async () => {
     const { env } = await loadEnvWith({
       NODE_ENV: "production",
-      R2_BUCKET: "prod-bucket",
-      R2_ACCESS_KEY: "access-key",
-      R2_SECRET_KEY: "secret-key",
-      R2_ENDPOINT: "https://abc123.r2.cloudflarestorage.com",
+      R2_BUCKET: "whisperbox-attachments",
+      AWS_ACCESS_KEY_ID: "access-key",
+      AWS_SECRET_ACCESS_KEY: "secret-key",
+      AWS_ENDPOINT_URL_S3: "https://storage.example.com",
+      AWS_REGION: "aws-eu-central-1",
     });
 
-    expect(env.R2_BUCKET).toBe("prod-bucket");
+    expect(env.R2_BUCKET).toBe("whisperbox-attachments");
   });
 });

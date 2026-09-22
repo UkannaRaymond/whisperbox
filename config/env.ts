@@ -1,24 +1,5 @@
 import { z } from "zod";
 
-/**
- * Server-side environment variables.
- *
- * These must never be exposed to the client bundle. Validated once at
- * process start so misconfiguration fails fast instead of surfacing as a
- * runtime error deep inside a request handler.
- */
-
-/**
- * `.env` files commonly leave an optional var declared-but-blank
- * (`SENTRY_DSN=`) rather than omitting it entirely — that parses to `""`,
- * not `undefined`, so a plain `.optional()` doesn't help: Zod still runs
- * the rest of the chain (`.url()`, `.min(1)`, ...) against the empty
- * string and fails. These coerce blank strings to `undefined` first so
- * "not configured" and "left blank" behave the same way. (An earlier
- * version of this file only did this for the `.url()` fields —
- * R2_BUCKET/R2_ACCESS_KEY/R2_SECRET_KEY use `.min(1)` instead and had the
- * exact same bug.)
- */
 const blankToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 
@@ -43,17 +24,14 @@ const serverEnvSchema = z
 
     AUTH_URL: z.string().url("AUTH_URL must be a valid URL"),
 
-    // Object storage (Cloudflare R2) for attachments. Required in
-    // production — attachment upload/download is a real feature that
-    // must not silently no-op there — but optional everywhere else: a
-    // local dev running `npm run dev` or `npm run socket:dev` to work on
-    // messaging/auth/sockets shouldn't be forced to provision real R2
-    // credentials first just for the process to boot. The `superRefine`
-    // below is what actually enforces "required in production."
+    // Neon Object Storage (S3-compatible)
+    AWS_ACCESS_KEY_ID: optionalString,
+    AWS_SECRET_ACCESS_KEY: optionalString,
+    AWS_ENDPOINT_URL_S3: optionalUrl,
+    AWS_REGION: optionalString,
+
+    // Neon Object Storage bucket
     R2_BUCKET: optionalString,
-    R2_ACCESS_KEY: optionalString,
-    R2_SECRET_KEY: optionalString,
-    R2_ENDPOINT: optionalUrl,
 
     SENTRY_DSN: optionalUrl,
     SENTRY_AUTH_TOKEN: z.string().optional(),
@@ -64,21 +42,25 @@ const serverEnvSchema = z
       .enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"])
       .default("info"),
 
-    // Port the standalone Socket.IO gateway process listens on (see
-    // server/socket/index.ts). Only read by that process, not by the
-    // Next.js app itself — added for Stage 08.
+    // Port the standalone Socket.IO gateway process listens on.
     SOCKET_PORT: z.coerce.number().int().positive().default(4001),
   })
   .superRefine((value, ctx) => {
     if (value.NODE_ENV !== "production") return;
 
-    const missingR2Vars = (
-      ["R2_BUCKET", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_ENDPOINT"] as const
+    const requiredStorageVars = (
+      [
+        "R2_BUCKET",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_ENDPOINT_URL_S3",
+        "AWS_REGION",
+      ] as const
     ).filter((key) => !value[key]);
 
-    for (const key of missingR2Vars) {
+    for (const key of requiredStorageVars) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: [key],
         message: `${key} is required in production (attachment storage)`,
       });

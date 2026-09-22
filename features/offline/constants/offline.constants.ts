@@ -1,14 +1,6 @@
 /**
- * Offline sync constants (09-OFFLINE-SYNC.md).
+ * Offline sync constants.
  */
-
-// IndexedDB layout — a separate database from Stage 07's
-// `whisperbox-crypto` (features/encryption/services/secure-storage.ts).
-// That database is narrowly scoped to key material and stays that way;
-// this one holds broader app data (conversations, messages, attachment
-// metadata, the offline queue, settings). Keeping them apart means a bug
-// or migration in one never risks corrupting the other's much
-// higher-stakes contents.
 export const DB_NAME = "whisperbox-offline";
 export const DB_VERSION = 1;
 

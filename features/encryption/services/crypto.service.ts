@@ -42,29 +42,6 @@ const AES_GCM_PARAMS: AesKeyGenParams = {
 
 // --- RSA-OAEP identity keypair --------------------------------------------
 
-/**
- * Generates a new RSA-OAEP-4096 identity keypair (07-CRYPTOGRAPHY.md § Key
- * Lifecycle, step 1: "Generate RSA keypair on first login").
- *
- * Key usages are `wrapKey`/`unwrapKey`, not `encrypt`/`decrypt` — this
- * keypair is only ever used to wrap/unwrap AES content keys
- * (`wrapContentKey`/`unwrapContentKey` below), never to encrypt arbitrary
- * data directly. Per the Web Crypto spec these are distinct usages even
- * though RSA-OAEP's `wrapKey` is implemented as export-then-encrypt
- * internally — passing `encrypt`/`decrypt` here instead throws
- * `InvalidAccessError` at the `wrapKey()`/`unwrapKey()` call site (caught
- * by an actual runtime test while building this, not just inferred from
- * the docs).
- *
- * The private key is generated `extractable: true`. This is a deliberate,
- * necessary tradeoff, not an oversight: a non-extractable CryptoKey cannot
- * be persisted at all (it only lives for the lifetime of that in-memory
- * object), so the private key must be exportable at least once, at
- * generation time, in order for key-manager.service.ts to encrypt it and
- * write it to IndexedDB for use across sessions. It is never persisted or
- * transmitted in this extractable/raw form — see
- * key-manager.service.ts#generateAndPersistIdentity.
- */
 export async function generateIdentityKeyPair(): Promise<IdentityKeyPair> {
   const keyPair = await crypto.subtle.generateKey(RSA_OAEP_PARAMS, true, ["wrapKey", "unwrapKey"]);
 
@@ -153,11 +130,6 @@ export async function decryptText(payload: AesEncryptedPayload, key: CryptoKey):
 
 /**
  * Wraps (RSA-OAEP-encrypts) an AES content key for one recipient
- * (07-CRYPTOGRAPHY.md § Key Lifecycle, step 5: "AES key encrypted for each
- * recipient"). Uses Web Crypto's native `wrapKey`, which exports the AES
- * key internally and RSA-OAEP-encrypts the raw bytes in one call — the raw
- * AES key material never exists as a separate JS value the caller has to
- * handle.
  */
 export async function wrapContentKey(
   contentKey: CryptoKey,
@@ -193,19 +165,6 @@ export async function unwrapContentKey(
 
 // --- High-level send/receive flow -----------------------------------------
 
-/**
- * Full sender-side flow for one message (07-CRYPTOGRAPHY.md § Message
- * Flow: "Sender → Encrypt → Upload ciphertext"): generate a fresh AES key,
- * encrypt the plaintext with it, and wrap that key for every recipient.
- *
- * `recipients` should be exactly the set of recipient USERS the message is
- * for — not one entry per device. See the multi-device limitation noted in
- * the server-side `EncryptedMessageKey` model
- * (repositories/interfaces/message.repository.interface.ts): today's
- * schema can only store one wrapped copy per recipient user, so wrapping
- * per-device here would produce keys the server has nowhere to persist
- * past the first one for each user.
- */
 export async function encryptForRecipients(
   plaintext: string,
   recipients: Array<{ id: string; publicKey: CryptoKey }>,
@@ -224,8 +183,6 @@ export async function encryptForRecipients(
 /**
  * Full recipient-side flow: find this device's wrapped copy of the
  * content key, unwrap it, and decrypt the message
- * (07-CRYPTOGRAPHY.md § Message Flow: "Recipient → Download → Decrypt
- * locally").
  */
 export async function decryptFromPayload(
   payload: EncryptedMessagePayload,

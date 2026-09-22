@@ -23,7 +23,7 @@ export const auth = betterAuth({
   baseURL: process.env.AUTH_URL,
 
   session: {
-    // Multi-device sessions (per the PRD) are represented as multiple rows
+    // Multi-device sessions are represented as multiple rows
     // in the Session table scoped to one user; expiry/refresh policy is
     // finalized in the Authentication phase.
     expiresIn: 60 * 60 * 24 * 7, // 7 days
