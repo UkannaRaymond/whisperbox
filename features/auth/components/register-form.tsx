@@ -126,12 +126,7 @@ export function RegisterForm() {
 
         {serverError && <FormError>{serverError}</FormError>}
 
-        <Button
-          type="submit"
-          size="lg"
-          disabled={form.formState.isSubmitting}
-          className="w-full"
-        >
+        <Button type="submit" size="lg" disabled={form.formState.isSubmitting} className="w-full">
           {form.formState.isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
           Create account
         </Button>

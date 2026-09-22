@@ -23,8 +23,8 @@ export default function ConversationsIndexPage() {
       <div className="space-y-2">
         <h1 className="text-[28px] font-bold tracking-[-0.03em]">WhisperBox on the web</h1>
         <p className="text-muted-foreground mx-auto max-w-sm text-[15px] leading-6">
-          Pick a chat from the list to read it, or start a new one. Everything you send is
-          encrypted on this device first.
+          Pick a chat from the list to read it, or start a new one. Everything you send is encrypted
+          on this device first.
         </p>
       </div>
 

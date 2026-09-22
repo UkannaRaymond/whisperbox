@@ -108,16 +108,20 @@ export async function decryptAttachmentFile(params: {
   messageContentKey: CryptoKey;
   mimeType: string;
 }): Promise<Blob> {
-  const { encryptedBytes, wrappedFileKey, wrappedFileKeyNonce, messageContentKey, mimeType } = params;
+  const { encryptedBytes, wrappedFileKey, wrappedFileKeyNonce, messageContentKey, mimeType } =
+    params;
 
   const rawFileKeyBuffer = await CryptoService.decryptBytes(
     { ciphertext: wrappedFileKey, nonce: wrappedFileKeyNonce },
     messageContentKey,
   );
-  const fileKey = await crypto.subtle.importKey("raw", rawFileKeyBuffer, { name: "AES-GCM" }, true, [
-    "encrypt",
-    "decrypt",
-  ]);
+  const fileKey = await crypto.subtle.importKey(
+    "raw",
+    rawFileKeyBuffer,
+    { name: "AES-GCM" },
+    true,
+    ["encrypt", "decrypt"],
+  );
 
   const combined = new Uint8Array(encryptedBytes);
   const nonceBytes = combined.slice(0, AES_GCM_IV_LENGTH_BYTES);

@@ -11,7 +11,10 @@ import { timelineQueryKey } from "./use-conversation-timeline";
 import type { CreateMessageDto, MessageResponseDto } from "@/schemas/message.schema";
 import type { AttachmentResponseDto, UploadUrlResponseDto } from "@/schemas/attachment.schema";
 
-import { sendMessageOverSocket, SocketAckTimeoutError } from "@/features/websocket/utils/socket-send";
+import {
+  sendMessageOverSocket,
+  SocketAckTimeoutError,
+} from "@/features/websocket/utils/socket-send";
 import type { AppClientSocket } from "@/features/websocket/utils/socket-send";
 
 interface SendAttachmentInput {
@@ -26,7 +29,6 @@ function notifyAttachmentUploaded(socket: AppClientSocket | null, attachmentId: 
   if (!socket) return;
   socket.emit("attachment_uploaded", { attachmentId }, (result) => {
     if (!result.ok) {
-       
       console.warn("[attachment] real-time broadcast failed:", result.error);
     }
   });

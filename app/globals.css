@@ -297,14 +297,15 @@
   animation: pulse-soft 1.5s ease-in-out infinite;
 }
 
-
 /* Landing-page polish: keep the product preview visually separated from the wallpaper in both themes. */
 .hero-chat-demo {
   isolation: isolate;
 }
 
 .dark .hero-chat-demo {
-  box-shadow: 0 24px 70px rgb(0 0 0 / 0.38), 0 0 0 1px rgb(255 255 255 / 0.06);
+  box-shadow:
+    0 24px 70px rgb(0 0 0 / 0.38),
+    0 0 0 1px rgb(255 255 255 / 0.06);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -314,6 +315,11 @@
 }
 
 @keyframes hero-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }

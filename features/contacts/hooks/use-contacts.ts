@@ -2,11 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import type {
-  AddContactDto,
-  ContactResponseDto,
-  UpdateContactDto,
-} from "@/schemas/contact.schema";
+import type { AddContactDto, ContactResponseDto, UpdateContactDto } from "@/schemas/contact.schema";
 
 export const contactsQueryKey = ["contacts"] as const;
 

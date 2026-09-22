@@ -62,7 +62,6 @@ export const useIdentityStore = create<IdentityState>((set) => ({
         state.status === "unlocked" ? state : { status: hasIdentity ? "locked" : "no-identity" },
       );
     } catch (err) {
-       
       console.error("[identity] checkStatus failed:", err);
       set({ status: "no-identity", error: err instanceof Error ? err.message : null });
     }
@@ -92,7 +91,6 @@ export const useIdentityStore = create<IdentityState>((set) => ({
       set({ status: "unlocked", privateKey });
       await publishDeviceKey(userId);
     } catch (err) {
-       
       console.error("[identity] unlock failed:", err);
       set({ error: err instanceof Error ? err.message : "Incorrect passphrase." });
     }

@@ -29,9 +29,7 @@ export function BubbleFrame({
     <div
       className={cn(
         "bubble relative w-fit max-w-[85%] rounded-lg px-2.5 pt-1.5 pb-1.5 text-[15px] leading-5 sm:max-w-[75%] lg:max-w-[65%]",
-        own
-          ? "bg-bubble-out text-bubble-out-foreground"
-          : "bg-bubble-in text-bubble-in-foreground",
+        own ? "bg-bubble-out text-bubble-out-foreground" : "bg-bubble-in text-bubble-in-foreground",
         tail && (own ? "bubble-tail-out rounded-tr-none" : "bubble-tail-in rounded-tl-none"),
         className,
       )}
@@ -52,7 +50,5 @@ export function BubbleFrame({
 
 /** Invisible inline block reserving room for the floating timestamp at the end of the last line. */
 export function BubbleSpacer({ own }: { own: boolean }) {
-  return (
-    <span aria-hidden="true" className={cn("inline-block h-3", own ? "w-19" : "w-13")} />
-  );
+  return <span aria-hidden="true" className={cn("inline-block h-3", own ? "w-19" : "w-13")} />;
 }

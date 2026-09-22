@@ -54,11 +54,7 @@ export function IconRail({ unreadCount }: { unreadCount: number }) {
         aria-label="Primary"
         className="bg-rail hidden w-16 shrink-0 flex-col items-center gap-1 border-r py-3 md:flex"
       >
-        <Link
-          href="/conversations"
-          className="mb-3 rounded-xl"
-          aria-label="WhisperBox home"
-        >
+        <Link href="/conversations" className="mb-3 rounded-xl" aria-label="WhisperBox home">
           <LogoMark className="size-9" />
         </Link>
 

@@ -112,13 +112,12 @@ function loadClientEnv(): ClientEnv {
 }
 
 /**
- * Validated server environment. Importing this anywhere in client code is a
- * mistake by construction: `DATABASE_URL` etc. are not defined in the
- * browser, so `env.DATABASE_URL` will throw immediately rather than leak
- * `undefined` into a code path that assumes it's set.
+ * Validated server environment.
+ *
+ * This module is server-only. Client code should import `clientEnv`
+ * instead of `env`.
  */
-export const env: ServerEnv =
-  typeof window === "undefined" ? loadServerEnv() : (undefined as never);
+export const env: ServerEnv = loadServerEnv();
 
 /**
  * Validated client environment. Safe to import from both client and server

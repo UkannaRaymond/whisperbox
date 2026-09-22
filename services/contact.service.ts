@@ -76,10 +76,7 @@ export async function listContacts(
  * a raw ConflictError message ("Contact already exists for this owner")
  * leak through unexplained.
  */
-export async function addContact(
-  ownerId: string,
-  dto: AddContactDto,
-): Promise<ContactResponseDto> {
+export async function addContact(ownerId: string, dto: AddContactDto): Promise<ContactResponseDto> {
   const target = await lookupUser(dto.handle);
 
   if (target.id === ownerId) {
