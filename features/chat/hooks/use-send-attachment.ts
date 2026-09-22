@@ -26,7 +26,7 @@ function notifyAttachmentUploaded(socket: AppClientSocket | null, attachmentId: 
   if (!socket) return;
   socket.emit("attachment_uploaded", { attachmentId }, (result) => {
     if (!result.ok) {
-      // eslint-disable-next-line no-console -- best-effort broadcast; log for diagnosis, nothing to recover here.
+       
       console.warn("[attachment] real-time broadcast failed:", result.error);
     }
   });

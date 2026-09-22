@@ -131,7 +131,9 @@ export interface ServerToClientEvents {
 
 // --- Inter-server (Redis adapter) events, if ever needed --------------
 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export interface InterServerEvents {}
+/* eslint-enable @typescript-eslint/no-empty-object-type */
 
 /** Per-socket session data attached by the auth middleware (server/socket/auth.ts) — available as `socket.data` in every handler. */
 export interface SocketData {

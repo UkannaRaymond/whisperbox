@@ -19,14 +19,68 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://your-domain.com"),
+
   title: {
-    default: "WhisperBox",
+    default: "WhisperBox — Private, End-to-End Encrypted Messaging",
     template: "%s · WhisperBox",
   },
+
   description:
-    "WhisperBox is an end-to-end encrypted messaging platform. Messages are encrypted on your device and never readable by the server.",
+    "WhisperBox is a private, end-to-end encrypted messaging platform. Your messages are encrypted on your device and never readable by the server.",
+
+  applicationName: "WhisperBox",
+
+  keywords: [
+    "WhisperBox",
+    "private messaging",
+    "secure messaging",
+    "encrypted messaging",
+    "end-to-end encryption",
+    "private chat",
+    "secure chat",
+  ],
+
+  authors: [
+    {
+      name: "Ukanna Raymond",
+    },
+  ],
+
+  creator: "Ukanna Raymond",
+  publisher: "Ukanna Raymond",
+
   icons: {
     icon: "/favicon.ico",
+  },
+
+  openGraph: {
+    type: "website",
+    siteName: "WhisperBox",
+    title: "WhisperBox — Private, End-to-End Encrypted Messaging",
+    description:
+      "Private conversations with end-to-end encryption. Your messages are encrypted on your device before they are sent.",
+    url: "https://your-domain.com",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "WhisperBox — Private, End-to-End Encrypted Messaging",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "WhisperBox — Private, End-to-End Encrypted Messaging",
+    description: "Private conversations with end-to-end encryption.",
+    images: ["/og-image.png"],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

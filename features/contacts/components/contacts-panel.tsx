@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Plus, ShieldBan, Trash2, UserRound, X } from "lucide-react";
+import { Loader2, Plus, ShieldBan, Trash2, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,13 +48,11 @@ export function ContactsPanel() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold">Contacts</h1>
-            <p className="text-muted-foreground text-sm">People you can start conversations with.</p>
+            <p className="text-muted-foreground text-sm">
+              People you can start conversations with.
+            </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowBlocked((value) => !value)}
-          >
+          <Button size="sm" variant="outline" onClick={() => setShowBlocked((value) => !value)}>
             {showBlocked ? "Show contacts" : "Show blocked"}
           </Button>
         </div>
@@ -89,7 +87,7 @@ export function ContactsPanel() {
 
           {isError && (
             <p className="text-destructive py-16 text-center text-sm">
-              Couldn't load your contacts. Try refreshing.
+              Couldn&apos;t load your contacts. Try refreshing.
             </p>
           )}
 
@@ -116,12 +114,19 @@ export function ContactsPanel() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
-                    {contact.nickname || contact.user.displayName || contact.user.username || "Unnamed user"}
+                    {contact.nickname ||
+                      contact.user.displayName ||
+                      contact.user.username ||
+                      "Unnamed user"}
                   </p>
                   {contact.nickname && contact.user.username && (
-                    <p className="text-muted-foreground truncate text-xs">@{contact.user.username}</p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      @{contact.user.username}
+                    </p>
                   )}
-                  <p className="text-muted-foreground text-xs">{contact.blocked ? "Blocked" : contact.user.status}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {contact.blocked ? "Blocked" : contact.user.status}
+                  </p>
                 </div>
 
                 {contact.blocked ? (

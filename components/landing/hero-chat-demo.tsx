@@ -10,6 +10,7 @@ import { BubbleFrame, BubbleSpacer } from "@/features/chat/components/bubble-fra
 const PLAINTEXT = "Landed! Sending the address now.";
 const REPLY = "Perfect, see you soon";
 const GLYPHS = "0123456789abcdef";
+
 /** Fixed placeholder so server and client render identical markup before the effect runs. */
 const SEALED = "9f3ac17e5b04d2a86c71e0f4b9a3d58c2e";
 
@@ -17,7 +18,11 @@ type Receipt = "pending" | "sent" | "delivered" | "read";
 
 function scrambled(length: number): string {
   let out = "";
-  for (let i = 0; i < length; i++) out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+
+  for (let i = 0; i < length; i++) {
+    out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+  }
+
   return out;
 }
 
@@ -29,6 +34,7 @@ function scrambled(length: number): string {
  */
 export function HeroChatDemo() {
   const reduced = useReducedMotion();
+
   const [revealed, setRevealed] = React.useState(0);
   const [noise, setNoise] = React.useState(SEALED);
   const [replyVisible, setReplyVisible] = React.useState(false);
@@ -36,9 +42,6 @@ export function HeroChatDemo() {
 
   React.useEffect(() => {
     if (reduced) {
-      setRevealed(PLAINTEXT.length);
-      setReplyVisible(true);
-      setReceipt("read");
       return;
     }
 
@@ -51,18 +54,26 @@ export function HeroChatDemo() {
     timers.push(
       setTimeout(() => {
         let n = 0;
+
         const reveal = setInterval(() => {
           n += 1;
           setRevealed(n);
-          if (n >= PLAINTEXT.length) clearInterval(reveal);
+
+          if (n >= PLAINTEXT.length) {
+            clearInterval(reveal);
+          }
         }, 34);
+
         intervals.push(reveal);
       }, 1200),
     );
 
     timers.push(setTimeout(() => setReplyVisible(true), 3200));
+
     timers.push(setTimeout(() => setReceipt("sent"), 3600));
+
     timers.push(setTimeout(() => setReceipt("delivered"), 4100));
+
     timers.push(setTimeout(() => setReceipt("read"), 4900));
 
     return () => {
@@ -71,24 +82,37 @@ export function HeroChatDemo() {
     };
   }, [reduced]);
 
-  const done = revealed >= PLAINTEXT.length;
-  const rest = noise.slice(revealed, PLAINTEXT.length);
+  // Reduced-motion users see the finished state without
+  // requiring state updates from inside the effect.
+  const effectiveRevealed = reduced ? PLAINTEXT.length : revealed;
+
+  const effectiveReplyVisible = reduced || replyVisible;
+
+  const effectiveReceipt: Receipt = reduced ? "read" : receipt;
+
+  const done = effectiveRevealed >= PLAINTEXT.length;
+
+  const rest = noise.slice(effectiveRevealed, PLAINTEXT.length);
 
   return (
     <div
       aria-hidden="true"
-      className="bg-card mx-auto w-full max-w-105 overflow-hidden rounded-2xl shadow-2xl shadow-black/15 ring-1 ring-black/5"
+      className="bg-card mx-auto w-full max-w-105 overflow-hidden rounded-2xl shadow-2xl ring-1 shadow-black/15 ring-black/5"
     >
       {/* Header */}
       <div className="bg-panel flex h-15 items-center gap-3 border-b px-4">
         <span
           className="flex size-10 items-center justify-center rounded-full text-sm font-medium text-[#0b0d14]"
-          style={{ backgroundColor: avatarColorFor("nia") }}
+          style={{
+            backgroundColor: avatarColorFor("nia"),
+          }}
         >
           NA
         </span>
+
         <div>
           <p className="text-[16px] leading-5 font-semibold">Nia Adeyemi</p>
+
           <p className="text-primary text-[13px] leading-4">Online</p>
         </div>
       </div>
@@ -119,11 +143,13 @@ export function HeroChatDemo() {
                 {PLAINTEXT}
                 <BubbleSpacer own={false} />
               </span>
+
               {!done && (
                 <span className="absolute inset-0 block overflow-hidden whitespace-nowrap">
-                  <span>{PLAINTEXT.slice(0, revealed)}</span>
+                  <span>{PLAINTEXT.slice(0, effectiveRevealed)}</span>
+
                   <span className="text-bubble-meta font-mono text-[13px] tracking-tight">
-                    {revealed === 0 ? SEALED.slice(0, PLAINTEXT.length) : rest}
+                    {effectiveRevealed === 0 ? SEALED.slice(0, PLAINTEXT.length) : rest}
                   </span>
                 </span>
               )}
@@ -134,7 +160,7 @@ export function HeroChatDemo() {
         <div
           className={cn(
             "mt-1 flex justify-end pr-2 transition-all duration-200",
-            replyVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+            effectiveReplyVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
           )}
         >
           <BubbleFrame
@@ -143,10 +169,14 @@ export function HeroChatDemo() {
             meta={
               <>
                 <time>2:41 PM</time>
-                {receipt === "pending" && <Clock className="size-3.5" />}
-                {receipt === "sent" && <Check className="size-4" />}
-                {receipt === "delivered" && <CheckCheck className="size-4" />}
-                {receipt === "read" && <CheckCheck className="text-tick-read size-4" />}
+
+                {effectiveReceipt === "pending" && <Clock className="size-3.5" />}
+
+                {effectiveReceipt === "sent" && <Check className="size-4" />}
+
+                {effectiveReceipt === "delivered" && <CheckCheck className="size-4" />}
+
+                {effectiveReceipt === "read" && <CheckCheck className="text-tick-read size-4" />}
               </>
             }
           >
@@ -163,6 +193,7 @@ export function HeroChatDemo() {
         <span className="bg-background text-muted-foreground flex-1 rounded-3xl px-4 py-2.5 text-[15px]">
           Type a message
         </span>
+
         <span className="text-muted-foreground flex size-11 items-center justify-center rounded-full">
           <Send className="size-5" />
         </span>
