@@ -75,7 +75,7 @@ WhisperBox is a real-time messaging app built around a simple rule: **nothing re
 ### Install
 
 ```bash
-git clone https://github.com/<your-org>/whisperbox.git
+git clone https://github.com/UkannaRaymond/whisperbox.git
 cd whisperbox
 npm install
 ```
@@ -124,8 +124,8 @@ lib/                 API client, auth client, utilities
 ## Screenshots
 
 <p align="center">
-  <img src="./public/landing.png" width="800" alt="Landing page"><br><br>
-  <img src="./public/chat.png" width="800" alt="Chat, desktop">
+  <img src="./public/landing.PNG" width="800" alt="Landing page"><br><br>
+  <img src="./public/chat.PNG" width="800" alt="Chat, desktop">
 </p>
 
 > Add your own screenshots under `docs/screenshots/` — the paths above are placeholders.

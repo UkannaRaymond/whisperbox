@@ -10,18 +10,6 @@ import * as CryptoService from "@/features/encryption/services/crypto.service";
 import { decryptAttachmentFile } from "../utils/attachment-crypto";
 import type { AttachmentResponseDto, DownloadUrlResponseDto } from "@/schemas/attachment.schema";
 
-/**
- * One attachment's download/preview control, rendered inside a chat
- * bubble whose message has one or more attachments
- * (`useMessageAttachments`). Decryption happens on demand — clicking
- * "Download" — rather than eagerly for every attachment in the timeline,
- * since a file can be up to 500MB and most won't be opened immediately.
- *
- * Needs the message's own wrapped content key (`wrappedKeyForMe`, same
- * one ChatBubble already threads into `useDecryptedText` for the message
- * text) to unwrap the attachment's file key — see
- * `attachment-crypto.ts`'s envelope design doc comment.
- */
 export function AttachmentPreview({
   attachment,
   wrappedKeyForMe,
@@ -30,29 +18,42 @@ export function AttachmentPreview({
   wrappedKeyForMe?: string | null;
 }) {
   const privateKey = useIdentityStore((state) => state.privateKey);
+
   const [state, setState] = React.useState<"idle" | "loading" | "error">("idle");
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [objectUrl]);
+  const isImage = attachment.type === "IMAGE";
 
-  async function handleDownload() {
+  /**
+   * Fetch and decrypt the attachment.
+   *
+   * Images are loaded automatically so they appear directly
+   * in the conversation. Other file types are loaded only when
+   * the user explicitly requests a download.
+   */
+  const loadAttachment = React.useCallback(async () => {
     if (!privateKey || !wrappedKeyForMe) {
       setState("error");
-      return;
+      return null;
+    }
+
+    if (objectUrl) {
+      return objectUrl;
     }
 
     setState("loading");
+
     try {
       const { downloadUrl } = await apiFetch<DownloadUrlResponseDto>(
         `/api/v1/attachments/${attachment.id}/download-url`,
       );
 
       const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error(`Download failed (${response.status})`);
+
+      if (!response.ok) {
+        throw new Error(`Download failed (${response.status})`);
+      }
+
       const encryptedBytes = await response.arrayBuffer();
 
       const messageContentKey = await CryptoService.unwrapContentKey(wrappedKeyForMe, privateKey);
@@ -66,40 +67,106 @@ export function AttachmentPreview({
       });
 
       const url = URL.createObjectURL(blob);
+
       setObjectUrl(url);
       setState("idle");
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = attachment.originalFileName ?? attachment.fileName;
-      link.click();
+      return url;
     } catch {
       setState("error");
+      return null;
     }
+  }, [attachment, privateKey, wrappedKeyForMe, objectUrl]);
+
+  /**
+   * Images are previews, so load them automatically.
+   *
+   * Non-image files remain on-demand because they can be large.
+   */
+  React.useEffect(() => {
+    if (!isImage) return;
+
+    void loadAttachment();
+  }, [isImage, loadAttachment]);
+
+  /**
+   * Revoke the object URL when the component unmounts.
+   */
+  React.useEffect(() => {
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [objectUrl]);
+
+  async function handleDownload() {
+    const url = await loadAttachment();
+
+    if (!url) return;
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachment.originalFileName ?? attachment.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
-  const isImage = attachment.type === "IMAGE";
+  if (isImage) {
+    if (state === "loading") {
+      return (
+        <div className="bg-foreground/6 flex h-40 w-64 max-w-full items-center justify-center rounded-md">
+          <Loader2 className="text-muted-foreground size-5 animate-spin" />
+        </div>
+      );
+    }
 
-  if (isImage && objectUrl) {
+    if (state === "error" || !objectUrl) {
+      return (
+        <div className="bg-foreground/6 flex w-64 max-w-full items-center gap-2 rounded-md px-3 py-2">
+          <TriangleAlert className="size-5 shrink-0" aria-hidden="true" />
+
+          <p className="min-w-0 flex-1 truncate text-xs">
+            Couldn't load {attachment.originalFileName ?? attachment.fileName}
+          </p>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0"
+            onClick={() => void loadAttachment()}
+            aria-label="Retry loading attachment"
+          >
+            <Download className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      );
+    }
+
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- decrypted client-side, never a remote URL Next's image optimizer could proxy.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={objectUrl}
         alt={attachment.originalFileName ?? attachment.fileName}
-        className="max-h-72 max-w-full rounded-md"
+        className="max-h-72 max-w-full cursor-pointer rounded-md object-contain"
       />
     );
   }
 
   return (
-    <div className="bg-foreground/[0.06] flex w-64 max-w-full items-center gap-2 rounded-md px-3 py-2">
+    <div className="bg-foreground/6 flex w-64 max-w-full items-center gap-2 rounded-md px-3 py-2">
       <FileIcon className="size-5 shrink-0 opacity-70" aria-hidden="true" />
+
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium">
           {attachment.originalFileName ?? attachment.fileName}
         </p>
+
         <p className="text-xs opacity-70">{formatBytes(Number(attachment.size))}</p>
       </div>
+
       <Button
         type="button"
         variant="ghost"
@@ -123,6 +190,10 @@ export function AttachmentPreview({
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

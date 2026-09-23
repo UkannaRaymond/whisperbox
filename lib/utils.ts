@@ -36,30 +36,40 @@ export function formatConversationTimestamp(value?: string | number | Date | nul
 
   const now = new Date();
 
-  const sameDay = date.toDateString() === now.toDateString();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
 
-  if (sameDay) {
+  const startOfDate = new Date(date);
+  startOfDate.setHours(0, 0, 0, 0);
+
+  const differenceInDays = (startOfToday.getTime() - startOfDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  // Today → time
+  if (differenceInDays === 0) {
     return new Intl.DateTimeFormat(undefined, {
       hour: "numeric",
       minute: "2-digit",
     }).format(date);
   }
 
-  const differenceInMs = now.getTime() - date.getTime();
-  const differenceInDays = differenceInMs / (1000 * 60 * 60 * 24);
+  // Yesterday → Yesterday
+  if (differenceInDays === 1) {
+    return "Yesterday";
+  }
 
-  if (differenceInDays >= 0 && differenceInDays < 7) {
+  // Previous 6 days → weekday
+  if (differenceInDays > 1 && differenceInDays < 7) {
     return new Intl.DateTimeFormat(undefined, {
       weekday: "short",
     }).format(date);
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  // Older → date
+  return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
   }).format(date);
 }
-
 export type DevicePlatform = "WINDOWS" | "MACOS" | "LINUX" | "ANDROID" | "IOS" | "WEB";
 
 export function detectDevicePlatform(): DevicePlatform {

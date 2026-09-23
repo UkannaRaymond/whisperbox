@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://your-domain.com"),
+  metadataBase: new URL("https://whisperbox-messenger.vercel.app/"),
 
   title: {
     default: "WhisperBox — Private, End-to-End Encrypted Messaging",
