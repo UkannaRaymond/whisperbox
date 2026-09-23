@@ -10,3 +10,4 @@ prisma/generated
 # not meant to be hand-formatted; letting Prettier touch it would just
 # fight with pnpm's own writer on every install.
 pnpm-workspace.yaml
+lib/generated/prisma
