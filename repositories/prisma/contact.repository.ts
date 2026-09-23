@@ -4,7 +4,7 @@ import type {
   UpdateContactInput,
 } from "../interfaces/contact.repository.interface";
 import { NotFoundError, ConflictError } from "../../errors";
-import { Contact, PrismaClient } from "@/lib/generated/prisma/client";
+import type { Contact, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class ContactRepository implements IContactRepository {
   constructor(private readonly prisma: PrismaClient) {}

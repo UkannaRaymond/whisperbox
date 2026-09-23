@@ -1,4 +1,4 @@
-import { Device, DevicePlatform } from "@/lib/generated/prisma/client";
+import type { Device, DevicePlatform } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 export interface CreateUserDeviceInput {

@@ -6,7 +6,7 @@ import type {
   ConversationOtherMember,
   ConversationLastMessagePreview,
 } from "../repositories/interfaces/conversation.repository.interface";
-import {
+import type {
   Attachment,
   Conversation,
   Message,

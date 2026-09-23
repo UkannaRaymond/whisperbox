@@ -1,4 +1,4 @@
-import { EncryptedMessageKey } from "@/lib/generated/prisma/client";
+import type { EncryptedMessageKey } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 /** See the multi-device caveat documented on `IMessageRepository` — this wraps per recipient USER, not per device. */

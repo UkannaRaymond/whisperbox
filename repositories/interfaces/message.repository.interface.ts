@@ -1,4 +1,4 @@
-import { Message, MessageType } from "@/lib/generated/prisma/client";
+import type { Message, MessageType } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 export interface CreateEncryptedKeyInput {

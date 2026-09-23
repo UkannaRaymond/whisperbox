@@ -4,7 +4,7 @@ import type {
   UpdateMessageReceiptInput,
 } from "../interfaces/message-receipt.repository.interface";
 import { NotFoundError } from "../../errors";
-import { MessageReceipt, PrismaClient } from "@/lib/generated/prisma/client";
+import type { MessageReceipt, PrismaClient } from "@/lib/generated/prisma/client";
 
 export class MessageReceiptRepository implements IMessageReceiptRepository {
   constructor(private readonly prisma: PrismaClient) {}

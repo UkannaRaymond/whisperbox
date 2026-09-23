@@ -9,7 +9,7 @@ import type {
   ListContactsQueryDto,
   ContactResponseDto,
 } from "../schemas/contact.schema";
-import { Contact } from "@/lib/generated/prisma/client";
+import type { Contact } from "@/lib/generated/prisma/client";
 
 /**
  * Contacts service — sits on top of `repositories.contacts`

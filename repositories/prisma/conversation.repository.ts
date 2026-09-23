@@ -5,7 +5,7 @@ import type {
   ConversationWithViewerContext,
 } from "../interfaces/conversation.repository.interface";
 import { NotFoundError } from "../../errors";
-import { Conversation, MemberRole, Prisma, PrismaClient } from "@/lib/generated/prisma/client";
+import type { Conversation, MemberRole, Prisma, PrismaClient } from "@/lib/generated/prisma/client";
 
 /**
  * Reconciled against the actual current schema:

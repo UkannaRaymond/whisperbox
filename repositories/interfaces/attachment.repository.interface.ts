@@ -1,4 +1,4 @@
-import { Attachment, AttachmentType } from "@/lib/generated/prisma/client";
+import type { Attachment, AttachmentType } from "@/lib/generated/prisma/client";
 import type { IBaseRepository } from "./base.repository.interface";
 
 export interface CreateAttachmentInput {
