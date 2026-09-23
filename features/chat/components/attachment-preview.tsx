@@ -21,24 +21,18 @@ export function AttachmentPreview({
 
   const [state, setState] = React.useState<"idle" | "loading" | "error">("idle");
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+  const objectUrlRef = React.useRef<string | null>(null);
 
   const isImage = attachment.type === "IMAGE";
 
-  /**
-   * Fetch and decrypt the attachment.
-   *
-   * Images are loaded automatically so they appear directly
-   * in the conversation. Other file types are loaded only when
-   * the user explicitly requests a download.
-   */
   const loadAttachment = React.useCallback(async () => {
     if (!privateKey || !wrappedKeyForMe) {
       setState("error");
       return null;
     }
 
-    if (objectUrl) {
-      return objectUrl;
+    if (objectUrlRef.current) {
+      return objectUrlRef.current;
     }
 
     setState("loading");
@@ -68,6 +62,7 @@ export function AttachmentPreview({
 
       const url = URL.createObjectURL(blob);
 
+      objectUrlRef.current = url;
       setObjectUrl(url);
       setState("idle");
 
@@ -76,17 +71,16 @@ export function AttachmentPreview({
       setState("error");
       return null;
     }
-  }, [attachment, privateKey, wrappedKeyForMe, objectUrl]);
+  }, [attachment, privateKey, wrappedKeyForMe]);
 
-  /**
-   * Images are previews, so load them automatically.
-   *
-   * Non-image files remain on-demand because they can be large.
-   */
   React.useEffect(() => {
     if (!isImage) return;
 
-    void loadAttachment();
+    const timeoutId = window.setTimeout(() => {
+      void loadAttachment();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [isImage, loadAttachment]);
 
   /**
@@ -128,7 +122,7 @@ export function AttachmentPreview({
           <TriangleAlert className="size-5 shrink-0" aria-hidden="true" />
 
           <p className="min-w-0 flex-1 truncate text-xs">
-            Couldn't load {attachment.originalFileName ?? attachment.fileName}
+            Couldn&apos;t load {attachment.originalFileName ?? attachment.fileName}
           </p>
 
           <Button

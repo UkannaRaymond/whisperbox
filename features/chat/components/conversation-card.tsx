@@ -59,14 +59,14 @@ export function ConversationCard({
       className={cn(
         "group relative transition-colors",
         // Inset divider that starts after the avatar, like a phone chat list.
-        "after:bg-border/70 after:absolute after:right-0 after:bottom-0 after:left-[72px] after:h-px",
+        "after:bg-border/70 after:absolute after:right-0 after:bottom-0 after:left-18 after:h-px",
         isActive ? "bg-accent" : "hover:bg-accent/60",
       )}
     >
       <Link
         href={`/conversations/${conversation.id}`}
         aria-current={isActive ? "page" : undefined}
-        className="flex h-[72px] items-center gap-3 px-3 outline-offset-[-2px]"
+        className="flex h-18 items-center gap-3 px-3 -outline-offset-2"
       >
         <div className="relative shrink-0">
           <Avatar className="size-12">
