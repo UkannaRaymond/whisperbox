@@ -94,12 +94,13 @@ describe("listMessages", () => {
 describe("createMessage", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("re-fetches viewer-aware so the sender gets their own wrapped key back", async () => {
+  it("returns the sender's wrapped key from the created message", async () => {
     findByConversationAndUser.mockResolvedValue({ leftAt: null });
     findByClientMessageId.mockResolvedValue(null);
-    create.mockResolvedValue(fakeMessage());
-    findByIdForViewer.mockResolvedValue(
-      fakeMessage({ encryptedKeyForMe: "wrapped-key-for-sender" }),
+    create.mockResolvedValue(
+      fakeMessage({
+        encryptedKeyForMe: "wrapped-key-for-sender",
+      }),
     );
 
     const result = await createMessage("user-1", {
@@ -109,33 +110,17 @@ describe("createMessage", () => {
       encryptedContent: "ciphertext",
       nonce: "nonce",
       encryptionVersion: 1,
-      encryptedKeys: [{ recipientId: "user-1", encryptedKey: "wrapped-key-for-sender" }],
+      encryptedKeys: [
+        {
+          recipientId: "user-1",
+          encryptedKey: "wrapped-key-for-sender",
+        },
+      ],
     });
 
-    expect(findByIdForViewer).toHaveBeenCalledWith("message-1", "user-1");
+    expect(findByIdForViewer).not.toHaveBeenCalled();
     expect(result.encryptedKeyForMe).toBe("wrapped-key-for-sender");
   });
-
-  it("falls back to the plain create() result if the viewer re-fetch somehow returns nothing", async () => {
-    findByConversationAndUser.mockResolvedValue({ leftAt: null });
-    findByClientMessageId.mockResolvedValue(null);
-    create.mockResolvedValue(fakeMessage());
-    findByIdForViewer.mockResolvedValue(null);
-
-    const result = await createMessage("user-1", {
-      conversationId: "conversation-1",
-      clientMessageId: "client-1",
-      type: "TEXT",
-      encryptedContent: "ciphertext",
-      nonce: "nonce",
-      encryptionVersion: 1,
-      encryptedKeys: [{ recipientId: "user-1", encryptedKey: "wrapped-key" }],
-    });
-
-    expect(result.id).toBe("message-1");
-    expect(result.encryptedKeyForMe).toBeNull();
-  });
-
   it("an idempotent retry (existing clientMessageId) still returns the viewer's wrapped key, not the bare row", async () => {
     findByConversationAndUser.mockResolvedValue({ leftAt: null });
     findByClientMessageId.mockResolvedValue(fakeMessage());

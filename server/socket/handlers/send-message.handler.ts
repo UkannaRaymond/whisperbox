@@ -1,9 +1,13 @@
 import { ZodError } from "zod";
 import { createLogger } from "../../logger";
 import { messageService } from "../../../services";
-import { repositories } from "../../../repositories/prisma";
+import { notifyRecipientsOfNewMessage } from "../../../services/message.service";
 import { createMessageSchema } from "../../../schemas/message.schema";
-import { initializeReceiptsForMessage, acknowledgeDelivery } from "../delivery.service";
+import {
+  registerRecipients,
+  checkOnlineRecipients,
+  acknowledgeDelivery,
+} from "../delivery.service";
 import { userRoom } from "../rooms";
 import type { AppSocket, AppServer } from "../socket-auth";
 import type { SocketMessagePayload } from "../../../features/websocket/types/socket-events.types";
@@ -53,28 +57,30 @@ export function registerSendMessageHandler(io: AppServer, socket: AppSocket): vo
         message: toSocketPayload(message, message.encryptedKeyForMe),
       });
 
-      const { recipientIds, onlineRecipientIds } = await initializeReceiptsForMessage(
+      const recipientIds = await registerRecipients(
         message.conversationId,
         message.id,
         socket.data.userId,
       );
 
+      void notifyRecipientsOfNewMessage(recipientIds, socket.data.userId, message.id);
+
       await Promise.all(
         recipientIds.map(async (recipientId) => {
-          const forRecipient = await repositories.messages.findByIdForViewer(
-            message.id,
-            recipientId,
-          );
+          const encryptedKeyForMe =
+            dto.encryptedKeys.find((key) => key.recipientId === recipientId)?.encryptedKey ?? null;
           io.to(userRoom(recipientId)).emit(
             "new_message",
-            toSocketPayload(message, forRecipient?.encryptedKeyForMe ?? null),
+            toSocketPayload(message, encryptedKeyForMe),
           );
         }),
       );
 
-      // Immediately mark+announce delivery for whoever's online right
-      // now (having just received `new_message` in their user room
-      // above already means it reached them).
+      // Online check happens AFTER the emit above, not before — it only
+      // decides whether to immediately fire the delivered-receipt; it
+      // must never delay actual message delivery to the recipient.
+      const onlineRecipientIds = await checkOnlineRecipients(recipientIds);
+
       await Promise.all(
         onlineRecipientIds.map(async (recipientId) => {
           const { deliveredAt } = await acknowledgeDelivery(message.id, recipientId);

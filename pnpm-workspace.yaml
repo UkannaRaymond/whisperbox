@@ -1,7 +1,10 @@
 allowBuilds:
+  '@playwright/browser-chromium': true
   '@prisma/engines': true
   '@sentry/cli': true
   esbuild: true
   msw: true
   prisma: true
+  protobufjs: true
+  unix-dgram: true
   unrs-resolver: true

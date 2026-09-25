@@ -35,6 +35,8 @@ yarn-error.log*
 .env.local
 .env.production
 !.env.example
+/perf/.env.perf.example
+perf/results/
 
 # playwright
 /playwright-report/
@@ -49,3 +51,5 @@ next-env.d.ts
 
 prisma/dev.db
 .neon
+
+perf/.env/.perf

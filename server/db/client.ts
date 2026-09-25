@@ -16,13 +16,7 @@ function createPrismaClient() {
 
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? [
-            { level: "warn", emit: "event" },
-            { level: "error", emit: "event" },
-          ]
-        : [{ level: "error", emit: "event" }],
+    log: [{ level: "error", emit: "event" }],
   });
 }
 
@@ -39,10 +33,6 @@ export const prisma = globalThis.__prisma ?? createPrismaClient();
 if (process.env.NODE_ENV !== "production") {
   globalThis.__prisma = prisma;
 }
-
-prisma.$on("warn" as never, (event: unknown) => {
-  log.warn({ event }, "Prisma warning");
-});
 
 prisma.$on("error" as never, (event: unknown) => {
   log.error({ event }, "Prisma error");

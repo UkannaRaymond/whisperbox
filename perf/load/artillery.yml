@@ -1,0 +1,28 @@
+config:
+  target: "{{ $processEnvironment.PERF_SOCKET_URL }}"
+  engines:
+    # NOT the built-in "socketio" engine — that ships a v2 client and
+    # won't handshake with a v3/v4 server. Install artillery-engine-socketio-v3
+    # and use its "socketio-v3" key instead.
+    socketio-v3: {}
+  phases:
+    - duration: 10
+      arrivalRate: 2
+      name: "trivial load"
+  processor: "./processor.js"
+
+# Each virtual user: log in as one of a pool of seeded test accounts and
+# fetch a fresh ticket (mintTicket, in processor.js, sets context.vars.ticket
+# — required, see perf/shared/auth-client.ts), THEN open the socket
+# connection with that ticket in `auth`, join a conversation, and idle.
+scenarios:
+  - name: "connect and idle"
+    engine: socketio-v3
+    flow:
+      - function: "mintTicket"
+      - connect:
+          auth:
+            ticket: "{{ ticket }}"
+      # socketio-v3's emit takes a plain array of args, not {channel, data}
+      - emit: ["join_conversation", { conversationId: "{{ conversationId }}" }]
+      - think: 55

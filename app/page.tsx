@@ -86,7 +86,7 @@ export default function LandingPage() {
 
             <div className="relative z-10 lg:translate-y-2">
               <div
-                className="bg-primary/10 absolute -inset-5 -z-10 rounded-[2rem] blur-2xl"
+                className="bg-primary/10 absolute -inset-5 -z-10 rounded-4xl blur-2xl"
                 aria-hidden="true"
               />
               <HeroChatDemo />

@@ -13,18 +13,22 @@ const log = createLogger("socket:delivery");
 /**
  * Called right after a message is persisted: creates a pending receipt row
  * for every active member of the conversation except the sender, and
- * returns both the full recipient list (the caller needs this to emit
- * `new_message` to every recipient's own user room — see
- * server/socket/handlers/send-message.handler.ts) and which of those
- * recipients are online right now (being in their user room to receive
- * that emit IS delivery, so the caller uses this subset to immediately
- * mark+announce delivered rather than leaving it pending).
+ * returns the recipient list — the caller needs this to emit `new_message`
+ * to every recipient's own user room (server/socket/handlers/
+ * send-message.handler.ts).
+ *
+ * Deliberately does NOT check online status here — that used to be
+ * bundled into this same function, but the Redis round trip it requires
+ * (isUserOnline, below) was measured at 140-165ms against this project's
+ * remote Upstash instance, and bundling it here meant every recipient's
+ * actual message delivery was blocked on a check that has nothing to do
+ * with whether the message should be emitted. See checkOnlineRecipients.
  */
-export async function initializeReceiptsForMessage(
+export async function registerRecipients(
   conversationId: string,
   messageId: string,
   senderId: string,
-): Promise<{ recipientIds: string[]; onlineRecipientIds: string[] }> {
+): Promise<string[]> {
   const members = await repositories.conversationMembers.findAllForConversation(conversationId);
   const recipientIds = members
     .map((member) => member.userId)
@@ -32,14 +36,22 @@ export async function initializeReceiptsForMessage(
 
   await repositories.messageReceipts.createManyForMessage(messageId, recipientIds);
 
+  return recipientIds;
+}
+
+/**
+ * Checks which of the given recipients are online right now and returns
+ * that subset. Call this AFTER emitting `new_message` to every recipient,
+ * not before — being in their user room to receive that emit IS delivery,
+ * so the caller uses this subset to immediately mark+announce delivered
+ * rather than leaving it pending, but the emit itself must never wait on
+ * this check.
+ */
+export async function checkOnlineRecipients(recipientIds: string[]): Promise<string[]> {
   const onlineChecks = await Promise.all(
     recipientIds.map(async (userId) => ({ userId, online: await isUserOnline(userId) })),
   );
-  const onlineRecipientIds = onlineChecks
-    .filter((check) => check.online)
-    .map((check) => check.userId);
-
-  return { recipientIds, onlineRecipientIds };
+  return onlineChecks.filter((check) => check.online).map((check) => check.userId);
 }
 
 export async function acknowledgeDelivery(
