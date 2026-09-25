@@ -52,24 +52,27 @@ export function formatConversationTimestamp(value?: string | number | Date | nul
     }).format(date);
   }
 
-  // Yesterday → Yesterday
+  // Yesterday
   if (differenceInDays === 1) {
     return "Yesterday";
   }
 
-  // Previous 6 days → weekday
-  if (differenceInDays > 1 && differenceInDays < 7) {
+  // This year → month + day
+  if (date.getFullYear() === now.getFullYear()) {
     return new Intl.DateTimeFormat(undefined, {
-      weekday: "short",
+      month: "short",
+      day: "numeric",
     }).format(date);
   }
 
-  // Older → date
+  // Previous years → month + day + year
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
+    year: "numeric",
   }).format(date);
 }
+
 export type DevicePlatform = "WINDOWS" | "MACOS" | "LINUX" | "ANDROID" | "IOS" | "WEB";
 
 export function detectDevicePlatform(): DevicePlatform {
