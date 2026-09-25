@@ -126,16 +126,25 @@ describe("formatConversationTimestamp", () => {
 
   it("shows a clock time for a timestamp from earlier today", () => {
     const result = formatConversationTimestamp("2026-06-15T14:23:00.000Z");
+
     expect(result).toMatch(/\d{1,2}:\d{2}/);
   });
 
-  it("shows a weekday abbreviation for a timestamp within the last week", () => {
-    const result = formatConversationTimestamp("2026-06-12T14:23:00.000Z");
-    expect(result).toMatch(/^[A-Z][a-z]{2}$/);
+  it("shows Yesterday for yesterday's timestamp", () => {
+    const result = formatConversationTimestamp("2026-06-14T14:23:00.000Z");
+
+    expect(result).toBe("Yesterday");
   });
 
-  it("shows a short date for a timestamp older than a week", () => {
-    const result = formatConversationTimestamp("2026-01-01T14:23:00.000Z");
-    expect(result).toMatch(/[A-Z][a-z]{2} \d{1,2}/);
+  it("shows month and day for a timestamp from earlier this year", () => {
+    const result = formatConversationTimestamp("2026-06-12T14:23:00.000Z");
+
+    expect(result).toMatch(/^(?:[A-Z][a-z]{2} \d{1,2}|\d{1,2} [A-Z][a-z]{2})$/);
+  });
+
+  it("shows month, day, and year for a timestamp from a previous year", () => {
+    const result = formatConversationTimestamp("2025-01-01T14:23:00.000Z");
+
+    expect(result).toMatch(/^(?:[A-Z][a-z]{2} \d{1,2}, \d{4}|\d{1,2} [A-Z][a-z]{2} \d{4})$/);
   });
 });
