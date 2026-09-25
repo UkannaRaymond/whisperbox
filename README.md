@@ -77,7 +77,7 @@ WhisperBox is a real-time messaging app built around a simple rule: **nothing re
 ```bash
 git clone https://github.com/UkannaRaymond/whisperbox.git
 cd whisperbox
-npm install
+pnpm install
 ```
 
 ### Configure
